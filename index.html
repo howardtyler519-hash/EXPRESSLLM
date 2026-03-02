@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Open Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #hero-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.35;
+      filter: saturate(0.4) brightness(0.6);
+    }
+
+    /* Fallback gradient if video doesn't load */
+    #hero-fallback {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, #3d1a08 0%, #1a0800 40%, #000 100%);
+      z-index: 0;
+    }
+
+    #hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,1) 100%);
+      z-index: 1;
+    }
+
+    #hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 6px;
+      color: var(--brown-light);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp 1s ease 0.3s forwards;
+    }
+
+    #hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(80px, 14vw, 160px);
+      color: var(--white);
+      letter-spacing: 16px;
+      line-height: 1.0;
+      opacity: 0;
+      animation: fadeUp 1s ease 0.5s forwards;
+    }
+
+    .hero-tagline {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--brown-pale);
+      letter-spacing: 2px;
+      font-style: italic;
+      opacity: 0;
+      animation: fadeUp 1s ease 0.8s forwards;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeUp 1s ease 1.2s forwards;
+    }
+
+    .scroll-indicator span {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, var(--brown-light), transparent);
+      animation: scrollPulse 2s ease infinite;
+    }
+
+    /* ── MAIN CONTENT ── */
+    #main-content {
+      background: var(--black);
+      padding: 80px 60px 120px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: var(--brown-light);
+      text-transform: uppercase;
+      margin-bottom: 48px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    /* ── CATEGORY GROUPS ── */
+    .categories {
+      display: flex;
+      flex-direction: column;
+      gap: 72px;
+    }
+
+    .category-group {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 40px;
+      align-items: start;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .category-group.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .category-header {
+      padding-top: 6px;
+      border-top: 1px solid var(--brown-warm);
+    }
+
+    .category-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      color: var(--white);
+      letter-spacing: 4px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .category-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* ── CHAT CARDS ── */
+    .chat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .chat-card {
+      background: #0a0a0a;
+      border: 1px solid #1c1c1c;
+      border-radius: 4px;
+      padding: 24px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+      text-decoration: none;
+      display: block;
+    }
+
+    .chat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--brown-mid) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .chat-card:hover {
+      border-color: var(--brown-warm);
+      transform: translateY(-3px);
+    }
+
+    .chat-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--brown-warm); color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+      font-size: 16px;
+    }
+
+    .card-title {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-weight: 300;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-arrow {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: var(--brown-light);
+      font-size: 18px;
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 1;
+    }
+
+    .chat-card:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      letter-spacing: 6px;
+      color: var(--white);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--brown-light); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .category-group { grid-template-columns: 1fr; gap: 24px; }
+      .chat-cards { grid-template-columns: 1fr; }
+      #main-content { padding: 60px 24px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">EXPRESS</div>
+    <ul class="nav-links">
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="knowledge.html">Knowledge</a></li>
+      <li><a href="#">History</a></li>
+      <li><a href="#">Settings</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div id="hero-fallback"></div>
+
+    <!--
+      VIDEO BACKGROUND
+      To use your own video, replace the src below with your video file path.
+      e.g. src="assets/background.mp4"
+      Supported formats: mp4, webm
+      For a free stock video, try: https://www.pexels.com/videos/
+    -->
+    <video id="hero-video" autoplay muted loop playsinline>
+      <source src="background.mp4" type="video/mp4">
+    </video>
+
+    <div id="hero-overlay"></div>
+
+    <div id="hero-content">
+      <p class="hero-eyebrow">AI-Powered Communication</p>
+      <h1>EXPRESS</h1>
+      <p class="hero-tagline">Craft every word with precision</p>
+    </div>
+
+    <div class="scroll-indicator">
+      <span>Explore</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+    <p class="section-label">Choose your workspace</p>
+
+    <div class="categories">
+
+      <!-- CONTENT -->
+      <div class="category-group">
+        <div class="category-header">
+          <h2 class="category-title">Content</h2>
+          <p class="category-desc">Generate and refine written content across any format or audience.</p>
+        </div>
+        <div class="chat-cards">
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">✦</div>
+            <div class="card-title">Ask</div>
+            <div class="card-desc">Get answers, ideas, and guidance for any content challenge.</div>
+            <div class="card-arrow">→</div>
+          </a>
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">◈</div>
+            <div class="card-title">Edit</div>
+            <div class="card-desc">Refine and improve your existing content with precision.</div>
+            <div class="card-arrow">→</div>
+          </a>
+          <a class="chat-card" href="build.html">
+            <div class="card-icon">❋</div>
+            <div class="card-title">Build</div>
+            <div class="card-desc">Generate and preview HTML output in real time.</div>
+            <div class="card-arrow">→</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- POLICY -->
+      <div class="category-group">
+        <div class="category-header">
+          <h2 class="category-title">Policy</h2>
+          <p class="category-desc">Draft, review, and refine policy documents with structured precision.</p>
+        </div>
+        <div class="chat-cards">
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">⬡</div>
+            <div class="card-title">Internal Policy</div>
+            <div class="card-desc">Workplace guidelines, procedures, and compliance documents.</div>
+            <div class="card-arrow">→</div>
+          </a>
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">◇</div>
+            <div class="card-title">Legal Review</div>
+            <div class="card-desc">Summarize and simplify complex legal language.</div>
+            <div class="card-arrow">→</div>
+          </a>
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">⬠</div>
+            <div class="card-title">Regulatory</div>
+            <div class="card-desc">Stay aligned with industry standards and regulations.</div>
+            <div class="card-arrow">→</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- COMMUNICATIONS -->
+      <div class="category-group">
+        <div class="category-header">
+          <h2 class="category-title">Comms</h2>
+          <p class="category-desc">Professional communications tailored to your voice and audience.</p>
+        </div>
+        <div class="chat-cards">
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">◉</div>
+            <div class="card-title">Email Drafts</div>
+            <div class="card-desc">Clear, professional emails for any situation or recipient.</div>
+            <div class="card-arrow">→</div>
+          </a>
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">⬟</div>
+            <div class="card-title">Press Releases</div>
+            <div class="card-desc">Newsworthy announcements written for media pickup.</div>
+            <div class="card-arrow">→</div>
+          </a>
+          <a class="chat-card" href="chat.html">
+            <div class="card-icon">✧</div>
+            <div class="card-title">Presentations</div>
+            <div class="card-desc">Structured narratives that command the room.</div>
+            <div class="card-arrow">→</div>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Scroll reveal for category groups
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 120);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.category-group').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>

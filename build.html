@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Build</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #back-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: var(--white);
+    }
+
+    .topbar-badge {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      background: var(--brown-mid);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--brown-warm);
+    }
+
+    #mode-toggle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1px solid #2a2a2a;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .mode-btn.active {
+      background: var(--brown-mid);
+      border-color: var(--brown-warm);
+      color: var(--white);
+    }
+
+    /* ── WORKSPACE ── */
+    #workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL ── */
+    #chat-panel {
+      width: 420px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1c1c1c;
+      background: #0a0a0a;
+      overflow: hidden;
+    }
+
+    /* ── CHAT MODE ── */
+    #chat-window {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    #chat-window::-webkit-scrollbar { width: 4px; }
+    #chat-window::-webkit-scrollbar-track { background: #0a0a0a; }
+    #chat-window::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      max-width: 90%;
+    }
+
+    .user { background: #3d2008; color: #f0e0d0; border: 1px solid #5a3020; align-self: flex-end; }
+    .assistant { background: #1a1510; color: #d0c5bc; border: 1px solid #2a2018; align-self: flex-start; }
+    .thinking { color: var(--text-muted); font-style: italic; font-size: 12px; align-self: flex-start; }
+
+    /* ── PASTE MODE ── */
+    #paste-area {
+      flex: 1;
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    #paste-area.visible { display: flex; }
+
+    #paste-area label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    #html-input {
+      flex: 1;
+      background: #111;
+      color: #c49a6c;
+      border: 1px solid #2a1f1a;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      resize: none;
+      outline: none;
+    }
+
+    #html-input:focus { border-color: var(--brown-warm); }
+
+    #preview-html-btn {
+      align-self: flex-end;
+      padding: 8px 16px;
+      background: var(--brown-warm);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s;
+    }
+
+    #preview-html-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    /* ── TEMPLATE BUILDER MODE ── */
+    #builder-area {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #builder-area.visible { display: flex; }
+
+    /* Content type selector */
+    #type-selector {
+      padding: 16px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #type-selector label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .type-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .type-option {
+      padding: 10px 12px;
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-family: 'Open Sans', sans-serif;
+      color: var(--text-muted);
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    .type-option:hover { border-color: var(--brown-warm); color: var(--white); }
+    .type-option.selected { background: var(--brown-mid); border-color: var(--brown-warm); color: var(--white); }
+
+    .type-option .type-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+    .type-option .type-name { font-weight: 500; display: block; }
+    .type-option .type-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; display: block; }
+    .type-option.selected .type-desc { color: var(--brown-light); }
+
+    /* Component list */
+    #component-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #component-list::-webkit-scrollbar { width: 4px; }
+    #component-list::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .component-group-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .component-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Open Sans', sans-serif;
+      color: var(--white);
+      text-align: left;
+      width: 100%;
+    }
+
+    .component-btn:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .component-btn:active { transform: scale(0.98); }
+
+    .component-btn .btn-icon { font-size: 16px; flex-shrink: 0; }
+    .component-btn .btn-info { display: flex; flex-direction: column; gap: 2px; }
+    .component-btn .btn-name { font-size: 13px; font-weight: 500; }
+    .component-btn .btn-desc { font-size: 11px; color: var(--text-muted); }
+
+    .add-indicator {
+      margin-left: auto;
+      font-size: 18px;
+      color: var(--brown-light);
+      flex-shrink: 0;
+    }
+
+    /* Reset button */
+    #builder-reset {
+      padding: 12px 16px;
+      border-top: 1px solid #1c1c1c;
+      flex-shrink: 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .reset-btn {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .reset-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    /* ── INPUT AREA (chat/paste) ── */
+    #input-area {
+      display: flex;
+      padding: 12px 16px;
+      gap: 8px;
+      border-top: 1px solid #1c1c1c;
+      background: #111111;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #1a1208;
+      color: var(--white);
+      border: 1px solid #3d2b1f;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    #user-input:focus { border-color: var(--brown-light); }
+    #user-input::placeholder { color: #4a3828; }
+
+    #send-btn {
+      padding: 10px 18px;
+      background: var(--brown-warm);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s;
+    }
+
+    #send-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    /* ── RIGHT PANEL ── */
+    #preview-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0d0d0d;
+      overflow: hidden;
+    }
+
+    #preview-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+      gap: 12px;
+    }
+
+    .preview-tab {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 0;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .preview-tab.active { color: var(--brown-light); border-bottom-color: var(--brown-light); }
+
+    #clear-preview-btn {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: color 0.2s;
+      margin-left: auto;
+    }
+
+    #clear-preview-btn:hover { color: var(--brown-light); }
+
+    #preview-tabs { display: flex; gap: 20px; }
+
+    /* Preview content areas */
+    #preview-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    #preview-frame {
+      flex: 1;
+      border: none;
+      background: white;
+      display: none;
+    }
+
+    #preview-frame.visible { display: block; }
+
+    #code-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #080808;
+      display: none;
+    }
+
+    #code-view.visible { display: block; }
+
+    #code-view pre {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #c49a6c;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.7;
+    }
+
+    #copy-code-btn {
+      display: block;
+      margin-bottom: 12px;
+      padding: 6px 14px;
+      background: var(--brown-mid);
+      border: 1px solid var(--brown-warm);
+      border-radius: 4px;
+      color: var(--white);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    #copy-code-btn:hover { background: var(--brown-warm); }
+
+    #preview-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .placeholder-icon { font-size: 40px; opacity: 0.3; }
+
+    #preview-placeholder p {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Build</div>
+    </div>
+    <div id="mode-toggle">
+      <button class="mode-btn active" id="btn-describe" onclick="setMode('describe')">Describe</button>
+      <button class="mode-btn" id="btn-paste" onclick="setMode('paste')">Paste HTML</button>
+      <button class="mode-btn" id="btn-builder" onclick="setMode('builder')">Template Builder</button>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div id="workspace">
+
+    <!-- LEFT PANEL -->
+    <div id="chat-panel">
+
+      <!-- DESCRIBE MODE -->
+      <div id="chat-window">
+        <div class="message assistant">
+          Welcome to Build! Describe what you want and I'll generate the HTML, switch to Paste HTML to preview your own code, or use Template Builder to click-and-build a template.
+        </div>
+      </div>
+
+      <!-- PASTE MODE -->
+      <div id="paste-area">
+        <label>Paste your HTML below</label>
+        <textarea id="html-input" placeholder="<html>...</html>"></textarea>
+        <button id="preview-html-btn" onclick="previewPastedHTML()">Preview →</button>
+      </div>
+
+      <!-- TEMPLATE BUILDER MODE -->
+      <div id="builder-area">
+
+        <!-- Step 1: Content type -->
+        <div id="type-selector">
+          <label>What type of content are you building?</label>
+          <div class="type-options">
+            <button class="type-option" onclick="selectType('article')">
+              <span class="type-icon">📄</span>
+              <span class="type-name">Article</span>
+              <span class="type-desc">Long-form editorial content</span>
+            </button>
+            <button class="type-option" onclick="selectType('catalog')">
+              <span class="type-icon">📋</span>
+              <span class="type-name">Catalog</span>
+              <span class="type-desc">Products or listings</span>
+            </button>
+            <button class="type-option" onclick="selectType('topic-action')">
+              <span class="type-icon">⚡</span>
+              <span class="type-name">Topic Action</span>
+              <span class="type-desc">Call to action focused</span>
+            </button>
+            <button class="type-option" onclick="selectType('topic-info')">
+              <span class="type-icon">💡</span>
+              <span class="type-name">Topic Info</span>
+              <span class="type-desc">Informational overview</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Component buttons -->
+        <div id="component-list">
+          <p style="font-size:12px; color: var(--text-muted); text-align:center; margin-top: 20px;">
+            Select a content type above to see available components
+          </p>
+        </div>
+
+        <!-- Builder actions -->
+        <div id="builder-reset">
+          <button class="reset-btn" onclick="resetBuilder()">↺ Reset</button>
+          <button class="reset-btn" onclick="undoLast()" style="flex:0; padding: 8px 16px;">↩ Undo</button>
+        </div>
+
+      </div>
+
+      <!-- INPUT AREA (shown for describe mode only) -->
+      <div id="input-area">
+        <textarea id="user-input" placeholder="Describe what you want to build..." rows="2"></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="preview-panel">
+      <div id="preview-topbar">
+        <div id="preview-tabs">
+          <div class="preview-tab active" onclick="setPreviewTab('preview')">Preview</div>
+          <div class="preview-tab" onclick="setPreviewTab('code')">HTML Code</div>
+        </div>
+        <button id="clear-preview-btn" onclick="clearPreview()">Clear</button>
+      </div>
+
+      <div id="preview-content">
+        <div id="preview-placeholder">
+          <div class="placeholder-icon">⬡</div>
+          <p>Preview will appear here</p>
+        </div>
+        <iframe id="preview-frame"></iframe>
+        <div id="code-view">
+          <button id="copy-code-btn" onclick="copyCode()">Copy Code</button>
+          <pre id="code-output"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+    let currentMode = "describe";
+    let currentPreviewTab = "preview";
+    let selectedType = null;
+    let templateBlocks = [];
+
+    // ── COMPONENTS PER CONTENT TYPE ──
+    const COMPONENTS = {
+      article: [
+        { group: "Headings & Text", items: [
+          { icon: "H1", name: "Hero Heading", desc: "Large title at the top", html: `<h1 style="font-size:2.5em;font-weight:700;margin-bottom:16px;color:#111;">Article Title Here</h1>` },
+          { icon: "H2", name: "Section Heading", desc: "Subheading for a new section", html: `<h2 style="font-size:1.6em;font-weight:600;margin:28px 0 12px;color:#222;">Section Heading</h2>` },
+          { icon: "¶", name: "Body Paragraph", desc: "Standard text paragraph", html: `<p style="font-size:1em;line-height:1.8;color:#444;margin-bottom:16px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>` },
+          { icon: "❝", name: "Pull Quote", desc: "Highlighted quote block", html: `<blockquote style="border-left:4px solid #c49a6c;padding:12px 20px;margin:24px 0;font-style:italic;color:#555;background:#faf8f5;">"This is an impactful pull quote that stands out from the rest of the content."</blockquote>` },
+        ]},
+        { group: "Images & Media", items: [
+          { icon: "🖼", name: "Hero Image", desc: "Full-width image at the top", html: `<img src="https://placehold.co/1200x500/333/ccc?text=Hero+Image" style="width:100%;border-radius:8px;margin-bottom:24px;" alt="Hero Image">` },
+          { icon: "📷", name: "Inline Image", desc: "Image within the article body", html: `<img src="https://placehold.co/800x400/555/eee?text=Inline+Image" style="width:100%;border-radius:6px;margin:16px 0;" alt="Inline Image">` },
+        ]},
+        { group: "Buttons & CTAs", items: [
+          { icon: "→", name: "Read More Button", desc: "Link to continue reading", html: `<a href="#" style="display:inline-block;padding:10px 24px;background:#333;color:#fff;border-radius:4px;text-decoration:none;font-size:0.9em;margin-top:12px;">Read More →</a>` },
+        ]},
+        { group: "Tables & Lists", items: [
+          { icon: "•", name: "Bullet List", desc: "Unordered key points", html: `<ul style="padding-left:20px;margin-bottom:16px;color:#444;line-height:2;"><li>First key point goes here</li><li>Second key point goes here</li><li>Third key point goes here</li></ul>` },
+          { icon: "#", name: "Numbered List", desc: "Ordered step-by-step list", html: `<ol style="padding-left:20px;margin-bottom:16px;color:#444;line-height:2;"><li>First step goes here</li><li>Second step goes here</li><li>Third step goes here</li></ol>` },
+        ]},
+      ],
+      catalog: [
+        { group: "Headings & Text", items: [
+          { icon: "H1", name: "Catalog Title", desc: "Main heading for the catalog", html: `<h1 style="font-size:2em;font-weight:700;margin-bottom:8px;color:#111;">Product Catalog</h1><p style="color:#777;margin-bottom:24px;">Browse our full collection</p>` },
+          { icon: "H2", name: "Category Label", desc: "Section label for a product group", html: `<h2 style="font-size:1.2em;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:#888;margin:28px 0 16px;border-bottom:1px solid #eee;padding-bottom:8px;">Category Name</h2>` },
+        ]},
+        { group: "Images & Media", items: [
+          { icon: "🛍", name: "Product Card", desc: "Image, name, price card", html: `<div style="display:inline-block;width:220px;border:1px solid #eee;border-radius:8px;overflow:hidden;margin:8px;vertical-align:top;"><img src="https://placehold.co/220x200/eee/999?text=Product" style="width:100%;display:block;"><div style="padding:12px;"><p style="font-weight:600;color:#111;margin-bottom:4px;">Product Name</p><p style="color:#888;font-size:0.9em;">$99.00</p></div></div>` },
+        ]},
+        { group: "Buttons & CTAs", items: [
+          { icon: "🛒", name: "Add to Cart", desc: "Primary purchase button", html: `<button style="padding:10px 24px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.9em;width:100%;margin-top:8px;">Add to Cart</button>` },
+          { icon: "♡", name: "Wishlist Button", desc: "Secondary save button", html: `<button style="padding:10px 24px;background:#fff;color:#111;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:0.9em;width:100%;margin-top:6px;">♡ Save to Wishlist</button>` },
+        ]},
+        { group: "Tables & Lists", items: [
+          { icon: "≡", name: "Specs Table", desc: "Product specification table", html: `<table style="width:100%;border-collapse:collapse;font-size:0.9em;margin:16px 0;"><tr style="background:#f5f5f5;"><th style="padding:10px;text-align:left;border:1px solid #eee;">Specification</th><th style="padding:10px;text-align:left;border:1px solid #eee;">Value</th></tr><tr><td style="padding:10px;border:1px solid #eee;">Material</td><td style="padding:10px;border:1px solid #eee;">Premium Cotton</td></tr><tr style="background:#fafafa;"><td style="padding:10px;border:1px solid #eee;">Weight</td><td style="padding:10px;border:1px solid #eee;">250g</td></tr></table>` },
+        ]},
+      ],
+      'topic-action': [
+        { group: "Headings & Text", items: [
+          { icon: "H1", name: "Action Headline", desc: "Bold motivating headline", html: `<h1 style="font-size:2.8em;font-weight:800;color:#111;line-height:1.1;margin-bottom:16px;">Take Action<br>Today</h1>` },
+          { icon: "¶", name: "Supporting Copy", desc: "Short motivating description", html: `<p style="font-size:1.1em;color:#555;line-height:1.7;max-width:560px;margin-bottom:24px;">A brief, compelling description that explains the value and motivates the reader to act immediately.</p>` },
+        ]},
+        { group: "Images & Media", items: [
+          { icon: "🖼", name: "Banner Image", desc: "Wide visual above the CTA", html: `<img src="https://placehold.co/1200x400/222/fff?text=Action+Banner" style="width:100%;border-radius:8px;margin-bottom:24px;" alt="Banner">` },
+        ]},
+        { group: "Buttons & CTAs", items: [
+          { icon: "⚡", name: "Primary CTA", desc: "Main action button", html: `<a href="#" style="display:inline-block;padding:14px 36px;background:#c49a6c;color:#fff;border-radius:4px;text-decoration:none;font-size:1em;font-weight:600;margin-right:12px;">Get Started Now</a>` },
+          { icon: "→", name: "Secondary CTA", desc: "Softer secondary action", html: `<a href="#" style="display:inline-block;padding:14px 36px;border:2px solid #333;color:#333;border-radius:4px;text-decoration:none;font-size:1em;">Learn More</a>` },
+          { icon: "✓", name: "Trust Badges", desc: "Reassurance below the CTA", html: `<div style="display:flex;gap:24px;margin-top:20px;color:#888;font-size:0.85em;"><span>✓ No credit card required</span><span>✓ Cancel anytime</span><span>✓ Free for 30 days</span></div>` },
+        ]},
+        { group: "Tables & Lists", items: [
+          { icon: "✓", name: "Benefits List", desc: "Checkmark benefit points", html: `<ul style="list-style:none;padding:0;margin-bottom:20px;"><li style="padding:8px 0;color:#444;font-size:0.95em;">✅ Benefit one — short and punchy</li><li style="padding:8px 0;color:#444;font-size:0.95em;">✅ Benefit two — short and punchy</li><li style="padding:8px 0;color:#444;font-size:0.95em;">✅ Benefit three — short and punchy</li></ul>` },
+        ]},
+      ],
+      'topic-info': [
+        { group: "Headings & Text", items: [
+          { icon: "H1", name: "Info Title", desc: "Clear informational heading", html: `<h1 style="font-size:2.2em;font-weight:700;color:#111;margin-bottom:12px;">Everything You Need to Know</h1>` },
+          { icon: "¶", name: "Intro Paragraph", desc: "Overview of the topic", html: `<p style="font-size:1.05em;color:#555;line-height:1.8;margin-bottom:20px;">This section provides a clear, accessible introduction to the topic. It sets context and helps readers understand what they're about to learn.</p>` },
+          { icon: "💡", name: "Info Callout", desc: "Highlighted tip or note", html: `<div style="background:#fffbf0;border:1px solid #f0d080;border-radius:6px;padding:14px 18px;margin:16px 0;font-size:0.9em;color:#7a5a00;">💡 <strong>Note:</strong> This is an important tip or piece of information worth highlighting for the reader.</div>` },
+        ]},
+        { group: "Images & Media", items: [
+          { icon: "📊", name: "Diagram / Chart", desc: "Placeholder for visual data", html: `<div style="background:#f5f5f5;border-radius:8px;padding:32px;text-align:center;color:#999;margin:16px 0;font-size:0.9em;">[ Diagram or Chart ]<br><span style="font-size:0.8em;">Replace with your image or embed</span></div>` },
+        ]},
+        { group: "Buttons & CTAs", items: [
+          { icon: "→", name: "Learn More Link", desc: "Soft navigation link", html: `<a href="#" style="display:inline-block;padding:10px 22px;border:1px solid #ccc;color:#333;border-radius:4px;text-decoration:none;font-size:0.9em;margin-top:12px;">Learn More →</a>` },
+        ]},
+        { group: "Tables & Lists", items: [
+          { icon: "≡", name: "Info Table", desc: "Two column reference table", html: `<table style="width:100%;border-collapse:collapse;font-size:0.9em;margin:16px 0;"><tr style="background:#f5f5f5;"><th style="padding:10px;text-align:left;border:1px solid #eee;">Topic</th><th style="padding:10px;text-align:left;border:1px solid #eee;">Details</th></tr><tr><td style="padding:10px;border:1px solid #eee;">Item One</td><td style="padding:10px;border:1px solid #eee;">Description of item one</td></tr><tr style="background:#fafafa;"><td style="padding:10px;border:1px solid #eee;">Item Two</td><td style="padding:10px;border:1px solid #eee;">Description of item two</td></tr></table>` },
+          { icon: "•", name: "Key Points List", desc: "Bullet summary of key info", html: `<ul style="padding-left:20px;margin-bottom:16px;color:#444;line-height:2;"><li>Key point or fact number one</li><li>Key point or fact number two</li><li>Key point or fact number three</li></ul>` },
+          { icon: "?", name: "FAQ Item", desc: "Question and answer block", html: `<div style="margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:16px;"><p style="font-weight:600;color:#111;margin-bottom:6px;">Frequently asked question goes here?</p><p style="color:#555;font-size:0.95em;line-height:1.7;">The answer to the question is written here in clear, plain language that is easy for the reader to understand.</p></div>` },
+        ]},
+      ],
+    };
+
+    // ── MODE SWITCHING ──
+    function setMode(mode) {
+      currentMode = mode;
+      ['describe','paste','builder'].forEach(m => {
+        document.getElementById(`btn-${m}`).classList.toggle('active', m === mode);
+      });
+
+      document.getElementById('chat-window').style.display = mode === 'describe' ? 'flex' : 'none';
+      document.getElementById('paste-area').classList.toggle('visible', mode === 'paste');
+      document.getElementById('builder-area').classList.toggle('visible', mode === 'builder');
+      document.getElementById('input-area').style.display = mode === 'describe' ? 'flex' : 'none';
+    }
+
+    // ── PREVIEW TABS ──
+    function setPreviewTab(tab) {
+      currentPreviewTab = tab;
+      document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const hasContent = templateBlocks.length > 0 ||
+        document.getElementById('preview-frame').srcdoc;
+
+      document.getElementById('preview-frame').classList.toggle('visible', tab === 'preview' && hasContent);
+      document.getElementById('code-view').classList.toggle('visible', tab === 'code' && hasContent);
+      document.getElementById('preview-placeholder').style.display = hasContent ? 'none' : 'flex';
+    }
+
+    // ── TEMPLATE BUILDER ──
+    function selectType(type) {
+      selectedType = type;
+      templateBlocks = [];
+
+      document.querySelectorAll('.type-option').forEach(btn => btn.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+
+      renderComponentList(type);
+      clearPreview();
+    }
+
+    function renderComponentList(type) {
+      const list = document.getElementById('component-list');
+      list.innerHTML = '';
+      const groups = COMPONENTS[type] || [];
+
+      groups.forEach(group => {
+        const groupLabel = document.createElement('p');
+        groupLabel.className = 'component-group-label';
+        groupLabel.textContent = group.group;
+        list.appendChild(groupLabel);
+
+        group.items.forEach(item => {
+          const btn = document.createElement('button');
+          btn.className = 'component-btn';
+          btn.innerHTML = `
+            <span class="btn-icon">${item.icon}</span>
+            <span class="btn-info">
+              <span class="btn-name">${item.name}</span>
+              <span class="btn-desc">${item.desc}</span>
+            </span>
+            <span class="add-indicator">+</span>
+          `;
+          btn.onclick = () => addComponent(item);
+          list.appendChild(btn);
+        });
+      });
+    }
+
+    function addComponent(item) {
+      templateBlocks.push(item.html);
+      updatePreview();
+
+      // Flash the add indicator
+      event.currentTarget.querySelector('.add-indicator').textContent = '✓';
+      setTimeout(() => {
+        if (event.currentTarget)
+          event.currentTarget.querySelector('.add-indicator').textContent = '+';
+      }, 600);
+    }
+
+    function undoLast() {
+      if (templateBlocks.length > 0) {
+        templateBlocks.pop();
+        updatePreview();
+      }
+    }
+
+    function resetBuilder() {
+      templateBlocks = [];
+      selectedType = null;
+      document.querySelectorAll('.type-option').forEach(btn => btn.classList.remove('selected'));
+      document.getElementById('component-list').innerHTML = `
+        <p style="font-size:12px; color: var(--text-muted); text-align:center; margin-top: 20px;">
+          Select a content type above to see available components
+        </p>`;
+      clearPreview();
+    }
+
+    function updatePreview() {
+      const wrapper = `
+        <html><head><style>
+          body { font-family: Georgia, serif; padding: 32px; max-width: 860px; margin: 0 auto; background: #fff; }
+        </style></head>
+        <body>${templateBlocks.join('\n')}</body></html>`;
+
+      const frame = document.getElementById('preview-frame');
+      const placeholder = document.getElementById('preview-placeholder');
+      const codeOutput = document.getElementById('code-output');
+
+      frame.srcdoc = wrapper;
+      codeOutput.textContent = wrapper;
+
+      placeholder.style.display = 'none';
+
+      if (currentPreviewTab === 'preview') {
+        frame.classList.add('visible');
+        document.getElementById('code-view').classList.remove('visible');
+      } else {
+        document.getElementById('code-view').classList.add('visible');
+        frame.classList.remove('visible');
+      }
+    }
+
+    // ── PASTE MODE ──
+    function previewPastedHTML() {
+      const html = document.getElementById('html-input').value.trim();
+      if (!html) return;
+      showPreview(html);
+    }
+
+    // ── CHAT MODE ──
+    function addMessage(text, role) {
+      const chatWindow = document.getElementById('chat-window');
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.textContent = text;
+      chatWindow.appendChild(div);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      return div;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const message = input.value.trim();
+      if (!message) return;
+      addMessage(message, 'user');
+      input.value = '';
+      const thinking = addMessage('Thinking...', 'thinking');
+      try {
+        const res = await fetch(`${API}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, config: 'blog-articles' })
+        });
+        const data = await res.json();
+        thinking.remove();
+        const reply = data.reply;
+        addMessage(reply, 'assistant');
+        if (reply.includes('<') && reply.includes('>')) showPreview(reply);
+      } catch (err) {
+        thinking.remove();
+        addMessage('Error: Could not reach the server.', 'assistant');
+      }
+    }
+
+    // ── SHARED PREVIEW ──
+    function showPreview(html) {
+      const frame = document.getElementById('preview-frame');
+      const placeholder = document.getElementById('preview-placeholder');
+      frame.srcdoc = html;
+      frame.classList.add('visible');
+      placeholder.style.display = 'none';
+      document.getElementById('code-output').textContent = html;
+    }
+
+    function clearPreview() {
+      const frame = document.getElementById('preview-frame');
+      frame.srcdoc = '';
+      frame.classList.remove('visible');
+      document.getElementById('code-view').classList.remove('visible');
+      document.getElementById('preview-placeholder').style.display = 'flex';
+      document.getElementById('code-output').textContent = '';
+    }
+
+    function copyCode() {
+      const code = document.getElementById('code-output').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copy-code-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Code', 1500);
+      });
+    }
+
+    document.getElementById('send-btn').addEventListener('click', sendMessage);
+    document.getElementById('user-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Knowledge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left { display: flex; align-items: center; gap: 20px; }
+
+    #back-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: var(--white);
+    }
+
+    .topbar-badge {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      background: var(--brown-mid);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--brown-warm);
+    }
+
+    .snow-badge {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .snow-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── LEFT: SEARCH PANEL ── */
+    #search-panel {
+      width: 380px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1c1c1c;
+      background: #0a0a0a;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    #search-input-wrap {
+      position: relative;
+    }
+
+    #search-input {
+      width: 100%;
+      padding: 10px 14px 10px 36px;
+      background: #111;
+      color: var(--white);
+      border: 1px solid #2a1f1a;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #search-input:focus { border-color: var(--brown-light); }
+    #search-input::placeholder { color: #3a2a20; }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    #search-results {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #search-results::-webkit-scrollbar { width: 4px; }
+    #search-results::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .result-item {
+      padding: 12px 14px;
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .result-item:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .result-item.selected { border-color: var(--brown-light); background: #1a1208; }
+
+    .result-number {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--brown-light);
+      margin-bottom: 4px;
+    }
+
+    .result-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .result-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+    }
+
+    .result-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid #2a2a2a;
+      color: var(--text-muted);
+    }
+
+    .no-results {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 32px 0;
+      font-style: italic;
+    }
+
+    /* ── RIGHT: WORK PANEL ── */
+    #work-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #0d0d0d;
+    }
+
+    /* Placeholder */
+    #work-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .placeholder-icon { font-size: 36px; opacity: 0.3; }
+
+    #work-placeholder p {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Article header */
+    #article-header {
+      padding: 20px 28px 16px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+      display: none;
+    }
+
+    .article-number {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--brown-light);
+      margin-bottom: 6px;
+    }
+
+    .article-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Action selector */
+    #action-selector {
+      padding: 20px 28px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+      display: none;
+    }
+
+    .action-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .action-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .action-card {
+      padding: 14px 16px;
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .action-card:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .action-card.selected { border-color: var(--brown-light); background: #1a1208; }
+
+    .action-card-icon { font-size: 20px; margin-bottom: 8px; display: block; }
+    .action-card-name { font-size: 13px; font-weight: 600; color: var(--white); display: block; margin-bottom: 4px; }
+    .action-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; display: block; }
+
+    /* Work area */
+    #work-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+      display: none;
+    }
+
+    #work-area::-webkit-scrollbar { width: 4px; }
+    #work-area::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    /* ── UPDATE FLOW ── */
+    .update-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .update-option {
+      padding: 20px;
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Open Sans', sans-serif;
+      text-align: left;
+    }
+
+    .update-option:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .update-option.selected { border-color: var(--brown-light); background: #1a1208; }
+
+    .update-option-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+    .update-option-name { font-size: 14px; font-weight: 600; color: var(--white); display: block; margin-bottom: 6px; }
+    .update-option-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; display: block; }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .article-preview {
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #c0b5ac;
+      line-height: 1.8;
+    }
+
+    .article-preview h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1c1c1c;
+    }
+
+    .article-section {
+      padding: 10px 0;
+      border-bottom: 1px solid #1c1c1c;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .article-section:last-child { border-bottom: none; }
+
+    .section-name { font-size: 13px; color: var(--white); }
+    .section-words { font-size: 11px; color: var(--text-muted); }
+
+    .edit-section-btn {
+      padding: 5px 12px;
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .edit-section-btn:hover { border-color: var(--brown-light); color: var(--white); }
+
+    /* ── CONSOLIDATE FLOW ── */
+    .consolidate-search-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .consolidate-search {
+      width: 100%;
+      padding: 10px 14px 10px 36px;
+      background: #111;
+      color: var(--white);
+      border: 1px solid #2a1f1a;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .consolidate-search:focus { border-color: var(--brown-light); }
+    .consolidate-search::placeholder { color: #3a2a20; }
+
+    .selected-articles {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .selected-article-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #1a1208;
+      border: 1px solid var(--brown-warm);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .chip-info { display: flex; flex-direction: column; gap: 2px; }
+    .chip-number { font-size: 10px; color: var(--brown-light); letter-spacing: 2px; }
+    .chip-title { color: var(--white); }
+
+    .chip-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      transition: color 0.2s;
+    }
+
+    .chip-remove:hover { color: #ef4444; }
+
+    .consolidate-results {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    /* ── GAP CHECK FLOW ── */
+    .gap-analysis {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .gap-item {
+      padding: 14px 16px;
+      border-radius: 6px;
+      border: 1px solid #1c1c1c;
+      background: #111;
+    }
+
+    .gap-item.critical { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+    .gap-item.suggested { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.04); }
+    .gap-item.optional { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.04); }
+
+    .gap-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .gap-tag {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .gap-tag.critical { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .gap-tag.suggested { background: rgba(251,191,36,0.2); color: #fde68a; }
+    .gap-tag.optional { background: rgba(34,197,94,0.2); color: #86efac; }
+
+    .gap-title { font-size: 13px; font-weight: 600; color: var(--white); }
+    .gap-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+    .gap-add-btn {
+      margin-top: 10px;
+      padding: 5px 12px;
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .gap-add-btn:hover { border-color: var(--brown-light); color: var(--white); }
+
+    /* ── SHARED COMPONENTS ── */
+    .work-textarea {
+      width: 100%;
+      background: #111;
+      color: #d0c5bc;
+      border: 1px solid #2a1f1a;
+      border-radius: 6px;
+      padding: 14px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: none;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .work-textarea:focus { border-color: var(--brown-light); }
+
+    .primary-btn {
+      padding: 10px 24px;
+      background: var(--brown-warm);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s;
+    }
+
+    .primary-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    .secondary-btn {
+      padding: 10px 20px;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .secondary-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .work-divider {
+      border: none;
+      border-top: 1px solid #1c1c1c;
+      margin: 20px 0;
+    }
+
+    .step-heading {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .step-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* ── CATEGORY FILTERS ── */
+    #category-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 20px 12px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    .filter-chip {
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #2a2a2a;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .filter-chip:hover { border-color: var(--brown-warm); color: var(--white); }
+    .filter-chip.active { background: var(--brown-mid); border-color: var(--brown-warm); color: var(--white); }
+
+    /* ── STALENESS INDICATOR ── */
+    .staleness-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .staleness-track {
+      flex: 1;
+      height: 3px;
+      background: #1c1c1c;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .staleness-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .staleness-fill.fresh  { background: #22c55e; }
+    .staleness-fill.aging  { background: #fbbf24; }
+    .staleness-fill.stale  { background: #f97316; }
+    .staleness-fill.overdue { background: #ef4444; }
+
+    .staleness-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .staleness-label.fresh  { color: #22c55e; }
+    .staleness-label.aging  { color: #fbbf24; }
+    .staleness-label.stale  { color: #f97316; }
+    .staleness-label.overdue { color: #ef4444; }
+
+    /* Staleness legend */
+    #staleness-legend {
+      display: flex;
+      gap: 14px;
+      padding: 8px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-dot.fresh   { background: #22c55e; }
+    .legend-dot.aging   { background: #fbbf24; }
+    .legend-dot.stale   { background: #f97316; }
+    .legend-dot.overdue { background: #ef4444; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Knowledge</div>
+    </div>
+    <div class="snow-badge">
+      <div class="snow-dot"></div>
+      ServiceNow Connected (Mock)
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- LEFT: ARTICLE SEARCH -->
+    <div id="search-panel">
+      <div class="panel-header">
+        <span class="panel-label">Search Knowledge Base</span>
+        <div id="search-input-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="search-input" placeholder="Search by name or article number...">
+        </div>
+      </div>
+
+      <!-- CATEGORY FILTERS -->
+      <div id="category-filters">
+        <button class="filter-chip active" onclick="setFilter('All')">All</button>
+        <button class="filter-chip" onclick="setFilter('IT Support')">IT Support</button>
+        <button class="filter-chip" onclick="setFilter('HR')">HR</button>
+        <button class="filter-chip" onclick="setFilter('Finance')">Finance</button>
+        <button class="filter-chip" onclick="setFilter('Communications')">Communications</button>
+      </div>
+
+      <!-- STALENESS LEGEND -->
+      <div id="staleness-legend">
+        <div class="legend-item"><div class="legend-dot fresh"></div><span style="color:#22c55e;">Fresh</span></div>
+        <div class="legend-item"><div class="legend-dot aging"></div><span style="color:#fbbf24;">Aging</span></div>
+        <div class="legend-item"><div class="legend-dot stale"></div><span style="color:#f97316;">Stale</span></div>
+        <div class="legend-item"><div class="legend-dot overdue"></div><span style="color:#ef4444;">Overdue</span></div>
+        <span style="font-size:9px;color:var(--text-muted);margin-left:auto;letter-spacing:1px;">Based on last update date</span>
+      </div>
+
+      <div id="search-results"></div>
+    </div>
+
+    <!-- RIGHT: WORK PANEL -->
+    <div id="work-panel">
+
+      <!-- Placeholder -->
+      <div id="work-placeholder">
+        <div class="placeholder-icon">◈</div>
+        <p>Search and select an article to begin</p>
+      </div>
+
+      <!-- Article header (shown after selection) -->
+      <div id="article-header">
+        <div class="article-number" id="article-number"></div>
+        <div class="article-title" id="article-title"></div>
+        <div class="article-meta">
+          <span id="article-category"></span>
+          <span id="article-updated"></span>
+          <span id="article-views"></span>
+        </div>
+      </div>
+
+      <!-- Action selector -->
+      <div id="action-selector">
+        <span class="action-label">What would you like to do with this article?</span>
+        <div class="action-cards">
+          <div class="action-card" onclick="selectAction('update')">
+            <span class="action-card-icon">✏️</span>
+            <span class="action-card-name">Update</span>
+            <span class="action-card-desc">Modify content or refresh the visual layout</span>
+          </div>
+          <div class="action-card" onclick="selectAction('consolidate')">
+            <span class="action-card-icon">⊕</span>
+            <span class="action-card-name">Consolidate</span>
+            <span class="action-card-desc">Merge with one or more related articles</span>
+          </div>
+          <div class="action-card" onclick="selectAction('gap')">
+            <span class="action-card-icon">🔍</span>
+            <span class="action-card-name">Gap Check</span>
+            <span class="action-card-desc">Find missing context or outdated sections</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Work area -->
+      <div id="work-area"></div>
+
+    </div>
+  </div>
+
+  <script>
+    // ── MOCK SERVICENOW DATA ──
+    const MOCK_ARTICLES = [
+      {
+        number: "KB0010042",
+        title: "How to Reset Your Company Password",
+        category: "IT Support",
+        updated: "Updated Jan 12, 2026",
+        lastUpdated: new Date("2026-01-12"),
+        views: "4,821 views",
+        sections: [
+          { name: "Overview", words: 82 },
+          { name: "Step-by-Step Instructions", words: 210 },
+          { name: "Troubleshooting", words: 145 },
+          { name: "Contact Information", words: 48 },
+        ],
+        body: "This article explains the process for resetting your company password through the self-service portal. Employees are required to reset their passwords every 90 days in accordance with IT security policy. If you have forgotten your password or been locked out of your account, follow the steps below to regain access. For urgent issues outside business hours, contact the IT helpdesk."
+      },
+      {
+        number: "KB0010089",
+        title: "Onboarding Checklist for New Employees",
+        category: "HR",
+        updated: "Updated Feb 3, 2026",
+        lastUpdated: new Date("2026-02-03"),
+        views: "2,340 views",
+        sections: [
+          { name: "Introduction", words: 65 },
+          { name: "Week One Tasks", words: 320 },
+          { name: "System Access Requests", words: 180 },
+          { name: "Required Training", words: 140 },
+          { name: "Key Contacts", words: 90 },
+        ],
+        body: "Welcome to the organization. This knowledge article outlines the steps all new employees must complete during their first two weeks. The onboarding checklist is designed to ensure a smooth transition into your role and help you gain access to the tools and systems needed to perform your job effectively."
+      },
+      {
+        number: "KB0010103",
+        title: "Submitting a Travel Expense Report",
+        category: "Finance",
+        updated: "Updated Dec 18, 2025",
+        lastUpdated: new Date("2025-12-18"),
+        views: "1,190 views",
+        sections: [
+          { name: "Policy Overview", words: 110 },
+          { name: "Eligible Expenses", words: 175 },
+          { name: "Submission Process", words: 260 },
+          { name: "Approval Workflow", words: 95 },
+        ],
+        body: "This article outlines the process for submitting travel expense reports through the Finance portal. All travel expenses must be submitted within 30 days of the trip. Receipts are required for any expense over $25. Employees should review the corporate travel policy before booking any business travel."
+      },
+      {
+        number: "KB0010117",
+        title: "VPN Setup and Remote Access Guide",
+        category: "IT Support",
+        updated: "Updated Jan 28, 2026",
+        lastUpdated: new Date("2026-01-28"),
+        views: "3,670 views",
+        sections: [
+          { name: "Requirements", words: 75 },
+          { name: "Installation Instructions", words: 290 },
+          { name: "Connecting to VPN", words: 165 },
+          { name: "Common Issues", words: 200 },
+        ],
+        body: "This guide provides instructions for setting up and using the company VPN to access internal systems remotely. The VPN client must be installed on all devices used for remote work. Employees working from home or traveling are required to connect through the VPN when accessing any company resource."
+      },
+      {
+        number: "KB0010134",
+        title: "Content Approval and Publishing Process",
+        category: "Communications",
+        updated: "Updated Feb 14, 2026",
+        lastUpdated: new Date("2026-02-14"),
+        views: "870 views",
+        sections: [
+          { name: "Overview", words: 90 },
+          { name: "Submission Requirements", words: 155 },
+          { name: "Review Stages", words: 220 },
+          { name: "Publishing Guidelines", words: 130 },
+          { name: "Escalation Process", words: 80 },
+        ],
+        body: "This article describes the end-to-end process for submitting, reviewing, and publishing official communications content. All content intended for external or company-wide distribution must go through the approval workflow before being published. The review process typically takes 3 to 5 business days depending on the complexity of the content."
+      },
+      {
+        number: "KB0010158",
+        title: "Microsoft Teams: Best Practices and Tips",
+        category: "IT Support",
+        updated: "Updated Nov 5, 2025",
+        lastUpdated: new Date("2025-11-05"),
+        views: "5,210 views",
+        sections: [
+          { name: "Getting Started", words: 120 },
+          { name: "Channels and Teams", words: 185 },
+          { name: "Meetings and Calls", words: 210 },
+          { name: "File Sharing", words: 145 },
+          { name: "Notifications", words: 100 },
+        ],
+        body: "Microsoft Teams is the primary collaboration tool for our organization. This article covers best practices for using Teams effectively, including how to organize channels, run productive meetings, and manage file sharing. Following these guidelines will help maintain a consistent and efficient working environment across teams."
+      },
+      {
+        number: "KB0010172",
+        title: "Annual Performance Review Process",
+        category: "HR",
+        updated: "Updated Jan 7, 2026",
+        lastUpdated: new Date("2026-01-07"),
+        views: "2,980 views",
+        sections: [
+          { name: "Process Overview", words: 100 },
+          { name: "Self-Assessment", words: 175 },
+          { name: "Manager Review", words: 155 },
+          { name: "Goal Setting", words: 130 },
+          { name: "Timeline", words: 65 },
+        ],
+        body: "This article explains the annual performance review cycle including timelines, expectations for self-assessments, and the manager review process. All full-time employees participate in the annual review. Reviews are used to guide compensation decisions, identify development opportunities, and set goals for the coming year."
+      },
+    ];
+
+    let selectedArticle = null;
+    let selectedAction = null;
+    let consolidateList = [];
+    let activeFilter = 'All';
+
+    // ── STALENESS LOGIC ──
+    // Fresh: <30d | Aging: 30-90d | Stale: 90-180d | Overdue: 180d+
+    function getStaleness(lastUpdated) {
+      const today = new Date("2026-03-01");
+      const days = Math.floor((today - lastUpdated) / (1000 * 60 * 60 * 24));
+      if (days < 30)  return { level: 'fresh',   label: 'Fresh',   pct: Math.round((days / 30) * 25), days };
+      if (days < 90)  return { level: 'aging',   label: 'Aging',   pct: Math.round(25 + ((days - 30) / 60) * 25), days };
+      if (days < 180) return { level: 'stale',   label: 'Stale',   pct: Math.round(50 + ((days - 90) / 90) * 25), days };
+      return             { level: 'overdue', label: 'Overdue', pct: Math.min(100, Math.round(75 + ((days - 180) / 180) * 25)), days };
+    }
+
+    function daysAgoLabel(days) {
+      if (days < 30) return `${days}d ago`;
+      if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+      return `${Math.floor(days / 365)}yr ago`;
+    }
+
+    // ── CATEGORY FILTER ──
+    function setFilter(category) {
+      activeFilter = category;
+      document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.textContent === category);
+      });
+      renderResults(document.getElementById('search-input').value);
+    }
+
+    // ── SEARCH ──
+    function renderResults(query) {
+      const container = document.getElementById('search-results');
+      let filtered = MOCK_ARTICLES;
+
+      if (activeFilter !== 'All') {
+        filtered = filtered.filter(a => a.category === activeFilter);
+      }
+
+      if (query) {
+        filtered = filtered.filter(a =>
+          a.title.toLowerCase().includes(query.toLowerCase()) ||
+          a.number.toLowerCase().includes(query.toLowerCase()) ||
+          a.category.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="no-results">No articles found${query ? ` for "${query}"` : ''}</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(a => {
+        const s = getStaleness(a.lastUpdated);
+        return `
+        <div class="result-item ${selectedArticle?.number === a.number ? 'selected' : ''}"
+             onclick="selectArticle('${a.number}')">
+          <div class="result-number">${a.number}</div>
+          <div class="result-title">${a.title}</div>
+          <div class="result-meta">
+            <span class="result-tag">${a.category}</span>
+            <span>${daysAgoLabel(s.days)}</span>
+          </div>
+          <div class="staleness-bar">
+            <div class="staleness-track">
+              <div class="staleness-fill ${s.level}" style="width:${s.pct}%"></div>
+            </div>
+            <span class="staleness-label ${s.level}">${s.label}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('search-input').addEventListener('input', function() {
+      renderResults(this.value);
+    });
+
+    // ── SELECT ARTICLE ──
+    function selectArticle(number) {
+      selectedArticle = MOCK_ARTICLES.find(a => a.number === number);
+      selectedAction = null;
+      consolidateList = [selectedArticle];
+
+      renderResults(document.getElementById('search-input').value);
+
+      document.getElementById('work-placeholder').style.display = 'none';
+      document.getElementById('article-header').style.display = 'block';
+      document.getElementById('action-selector').style.display = 'block';
+      document.getElementById('work-area').style.display = 'none';
+      document.getElementById('work-area').innerHTML = '';
+
+      document.querySelectorAll('.action-card').forEach(c => c.classList.remove('selected'));
+
+      document.getElementById('article-number').textContent = selectedArticle.number;
+      document.getElementById('article-title').textContent = selectedArticle.title;
+      document.getElementById('article-category').textContent = `📂 ${selectedArticle.category}`;
+      document.getElementById('article-updated').textContent = `🕐 ${selectedArticle.updated}`;
+      document.getElementById('article-views').textContent = `👁 ${selectedArticle.views}`;
+    }
+
+    // ── SELECT ACTION ──
+    function selectAction(action) {
+      selectedAction = action;
+      document.querySelectorAll('.action-card').forEach(c => c.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+
+      const workArea = document.getElementById('work-area');
+      workArea.style.display = 'block';
+      workArea.innerHTML = '';
+
+      if (action === 'update') renderUpdateFlow();
+      if (action === 'consolidate') renderConsolidateFlow();
+      if (action === 'gap') renderGapFlow();
+    }
+
+    // ── UPDATE FLOW ──
+    function renderUpdateFlow(selected) {
+      const workArea = document.getElementById('work-area');
+
+      if (!selected) {
+        workArea.innerHTML = `
+          <p class="step-heading">What would you like to update?</p>
+          <p class="step-sub">Choose whether you want to edit the article's written content or refresh its visual layout and formatting.</p>
+          <div class="update-options">
+            <div class="update-option" onclick="renderUpdateFlow('content')">
+              <span class="update-option-icon">📝</span>
+              <span class="update-option-name">Update Content</span>
+              <span class="update-option-desc">Edit, rewrite, or add to specific sections of the article text.</span>
+            </div>
+            <div class="update-option" onclick="renderUpdateFlow('look')">
+              <span class="update-option-icon">🎨</span>
+              <span class="update-option-name">Update Look</span>
+              <span class="update-option-desc">Refresh the formatting, structure, and visual layout of the article.</span>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (selected === 'content') {
+        const sections = selectedArticle.sections.map(s => `
+          <div class="article-section">
+            <div>
+              <div class="section-name">${s.name}</div>
+              <div class="section-words">${s.words} words</div>
+            </div>
+            <button class="edit-section-btn" onclick="openSectionEditor('${s.name}')">Edit Section →</button>
+          </div>`).join('');
+
+        workArea.innerHTML = `
+          <span class="section-label">Article Sections</span>
+          <div class="article-preview">
+            <h3>${selectedArticle.title}</h3>
+            ${sections}
+          </div>
+          <hr class="work-divider">
+          <div id="section-editor" style="display:none;">
+            <span class="section-label" id="editing-label">Editing: —</span>
+            <textarea class="work-textarea" id="section-content" rows="8" placeholder="Section content will appear here..."></textarea>
+            <p class="step-sub">Describe the changes you want or edit the text directly above.</p>
+            <textarea class="work-textarea" id="section-instructions" rows="3" placeholder="E.g. Make this more concise and add a note about multi-factor authentication..."></textarea>
+            <div class="btn-row">
+              <button class="primary-btn">Apply Changes</button>
+              <button class="secondary-btn" onclick="document.getElementById('section-editor').style.display='none'">Cancel</button>
+            </div>
+          </div>`;
+      }
+
+      if (selected === 'look') {
+        workArea.innerHTML = `
+          <p class="step-heading">Update Visual Layout</p>
+          <p class="step-sub">Choose how you want to restructure the presentation of this article.</p>
+          <span class="section-label">Layout Options</span>
+          <div class="update-options" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="update-option" style="cursor:pointer;">
+              <span class="update-option-icon">📋</span>
+              <span class="update-option-name">Add Table of Contents</span>
+              <span class="update-option-desc">Auto-generate a linked TOC from section headings.</span>
+            </div>
+            <div class="update-option" style="cursor:pointer;">
+              <span class="update-option-icon">⚡</span>
+              <span class="update-option-name">Add Quick Steps</span>
+              <span class="update-option-desc">Convert instructions into a numbered step format.</span>
+            </div>
+            <div class="update-option" style="cursor:pointer;">
+              <span class="update-option-icon">💡</span>
+              <span class="update-option-name">Add Callout Boxes</span>
+              <span class="update-option-desc">Highlight tips, warnings, and important notes.</span>
+            </div>
+            <div class="update-option" style="cursor:pointer;">
+              <span class="update-option-icon">📊</span>
+              <span class="update-option-name">Convert to Table</span>
+              <span class="update-option-desc">Restructure list-based content into a clean table.</span>
+            </div>
+            <div class="update-option" style="cursor:pointer;">
+              <span class="update-option-icon">✂️</span>
+              <span class="update-option-name">Trim & Simplify</span>
+              <span class="update-option-desc">Remove redundancy and tighten the structure.</span>
+            </div>
+            <div class="update-option" style="cursor:pointer;">
+              <span class="update-option-icon">🔗</span>
+              <span class="update-option-name">Add Related Links</span>
+              <span class="update-option-desc">Suggest and add links to related knowledge articles.</span>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="primary-btn">Generate Updated Layout</button>
+            <button class="secondary-btn" onclick="renderUpdateFlow()">← Back</button>
+          </div>`;
+      }
+    }
+
+    function openSectionEditor(sectionName) {
+      document.getElementById('section-editor').style.display = 'block';
+      document.getElementById('editing-label').textContent = `Editing: ${sectionName}`;
+      document.getElementById('section-content').value = selectedArticle.body;
+      document.getElementById('section-content').focus();
+      document.getElementById('section-editor').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ── CONSOLIDATE FLOW ──
+    function renderConsolidateFlow() {
+      const workArea = document.getElementById('work-area');
+      workArea.innerHTML = `
+        <p class="step-heading">Consolidate Articles</p>
+        <p class="step-sub">Search for additional articles to merge with <strong style="color:var(--brown-light);">${selectedArticle.title}</strong>. All selected articles will be combined into a single unified article.</p>
+
+        <span class="section-label">Selected Articles</span>
+        <div class="selected-articles" id="selected-articles-list"></div>
+
+        <span class="section-label">Add More Articles</span>
+        <div class="consolidate-search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" class="consolidate-search" id="consolidate-search"
+                 placeholder="Search by name or article number..." oninput="renderConsolidateSearch(this.value)">
+        </div>
+        <div class="consolidate-results" id="consolidate-results"></div>
+
+        <hr class="work-divider">
+        <p class="step-sub">Optionally add instructions for how the articles should be merged.</p>
+        <textarea class="work-textarea" rows="3"
+          placeholder="E.g. Keep the troubleshooting section from KB0010042 and use the introduction from KB0010117..."></textarea>
+        <div class="btn-row">
+          <button class="primary-btn" onclick="runConsolidate()">Consolidate Articles</button>
+        </div>`;
+
+      renderSelectedChips();
+      renderConsolidateSearch('');
+    }
+
+    function renderSelectedChips() {
+      const list = document.getElementById('selected-articles-list');
+      if (!list) return;
+      list.innerHTML = consolidateList.map(a => `
+        <div class="selected-article-chip">
+          <div class="chip-info">
+            <span class="chip-number">${a.number}</span>
+            <span class="chip-title">${a.title}</span>
+          </div>
+          ${a.number !== selectedArticle.number
+            ? `<button class="chip-remove" onclick="removeFromConsolidate('${a.number}')">×</button>`
+            : '<span style="font-size:10px;color:var(--text-muted);padding-right:4px;">Primary</span>'}
+        </div>`).join('');
+    }
+
+    function renderConsolidateSearch(query) {
+      const container = document.getElementById('consolidate-results');
+      if (!container) return;
+      const alreadySelected = consolidateList.map(a => a.number);
+      const filtered = MOCK_ARTICLES.filter(a =>
+        !alreadySelected.includes(a.number) &&
+        (query === '' ||
+         a.title.toLowerCase().includes(query.toLowerCase()) ||
+         a.number.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      container.innerHTML = filtered.map(a => `
+        <div class="result-item" onclick="addToConsolidate('${a.number}')">
+          <div class="result-number">${a.number}</div>
+          <div class="result-title">${a.title}</div>
+          <div class="result-meta">
+            <span class="result-tag">${a.category}</span>
+            <span style="color:var(--brown-light);font-size:11px;">+ Add</span>
+          </div>
+        </div>`).join('');
+    }
+
+    function addToConsolidate(number) {
+      const article = MOCK_ARTICLES.find(a => a.number === number);
+      if (article && !consolidateList.find(a => a.number === number)) {
+        consolidateList.push(article);
+        renderSelectedChips();
+        renderConsolidateSearch(document.getElementById('consolidate-search')?.value || '');
+      }
+    }
+
+    function removeFromConsolidate(number) {
+      consolidateList = consolidateList.filter(a => a.number !== number);
+      renderSelectedChips();
+      renderConsolidateSearch(document.getElementById('consolidate-search')?.value || '');
+    }
+
+    function runConsolidate() {
+      const workArea = document.getElementById('work-area');
+      workArea.innerHTML = `
+        <p class="step-heading">Consolidation Ready</p>
+        <p class="step-sub">The following ${consolidateList.length} articles are queued for consolidation. When the LLM is connected, a unified article will be generated combining all content.</p>
+        ${consolidateList.map(a => `
+          <div class="selected-article-chip" style="margin-bottom:8px;">
+            <div class="chip-info">
+              <span class="chip-number">${a.number}</span>
+              <span class="chip-title">${a.title}</span>
+            </div>
+          </div>`).join('')}
+        <hr class="work-divider">
+        <div style="padding:20px;background:#111;border:1px dashed #2a1f1a;border-radius:8px;text-align:center;color:var(--text-muted);font-size:13px;">
+          ⏳ LLM consolidation will run here once connected
+        </div>
+        <div class="btn-row">
+          <button class="secondary-btn" onclick="renderConsolidateFlow()">← Back</button>
+        </div>`;
+    }
+
+    // ── GAP CHECK FLOW ──
+    function renderGapFlow() {
+      const workArea = document.getElementById('work-area');
+      workArea.innerHTML = `
+        <p class="step-heading">Gap Check — ${selectedArticle.title}</p>
+        <p class="step-sub">Based on the article content and category, here are areas that may be missing context, outdated, or worth expanding.</p>
+        <div class="gap-analysis" id="gap-analysis"></div>
+        <div class="btn-row">
+          <button class="primary-btn">Generate Full Gap Report</button>
+        </div>`;
+
+      const gaps = getMockGaps(selectedArticle);
+      const container = document.getElementById('gap-analysis');
+      container.innerHTML = gaps.map(g => `
+        <div class="gap-item ${g.severity}">
+          <div class="gap-item-header">
+            <span class="gap-title">${g.title}</span>
+            <span class="gap-tag ${g.severity}">${g.severity}</span>
+          </div>
+          <p class="gap-desc">${g.desc}</p>
+          <button class="gap-add-btn">+ Add to Article</button>
+        </div>`).join('');
+    }
+
+    function getMockGaps(article) {
+      const gapSets = {
+        "IT Support": [
+          { severity: "critical", title: "Multi-Factor Authentication Note", desc: "No mention of MFA requirements. Users attempting to reset passwords without MFA enabled will encounter errors that are not addressed in this article." },
+          { severity: "suggested", title: "Mobile Device Instructions", desc: "Instructions only cover desktop. A growing number of employees access systems via mobile and may need platform-specific guidance." },
+          { severity: "suggested", title: "Browser Compatibility", desc: "The self-service portal may behave differently across browsers. A note on supported browsers could reduce helpdesk tickets." },
+          { severity: "optional", title: "Video Walkthrough Link", desc: "A short screen-recorded video would improve completion rates for less technical users." },
+        ],
+        "HR": [
+          { severity: "critical", title: "Remote Onboarding Process", desc: "This article does not address differences for remote employees. Remote onboarding has a distinct workflow that should be documented separately or included here." },
+          { severity: "suggested", title: "Badge and Office Access", desc: "No mention of how new employees obtain physical building access. This is frequently raised in onboarding feedback." },
+          { severity: "optional", title: "Buddy Program Information", desc: "The company has an optional buddy program for new hires that is not mentioned. Adding a reference could improve engagement." },
+        ],
+        "Finance": [
+          { severity: "critical", title: "International Travel Currency Rules", desc: "The article does not address expense reporting in foreign currencies. This gap causes frequent resubmissions for international travelers." },
+          { severity: "suggested", title: "Per Diem Rate Table", desc: "Current per diem rates by city are not included. Adding a reference table would reduce back-and-forth with the finance team." },
+          { severity: "optional", title: "Credit Card vs. Out-of-Pocket", desc: "No guidance on when to use the corporate card versus personal funds for reimbursement." },
+        ],
+        "Communications": [
+          { severity: "critical", title: "Emergency Communications Bypass", desc: "No process is described for urgent communications that need to bypass the standard review timeline." },
+          { severity: "suggested", title: "Social Media Cross-Posting", desc: "The article covers internal publishing but does not address how approved content gets distributed across social channels." },
+          { severity: "optional", title: "Brand Voice Reference", desc: "A link to the brand voice guidelines would help contributors maintain tone consistency during the drafting stage." },
+        ],
+      };
+
+      return gapSets[article.category] || [
+        { severity: "suggested", title: "Content Review Date", desc: "This article does not have a scheduled review date. Adding one ensures content stays current." },
+        { severity: "optional", title: "Related Articles", desc: "No related articles are linked. Cross-referencing similar knowledge articles improves discoverability." },
+      ];
+    }
+
+    // ── INIT ──
+    renderResults('');
+  </script>
+
+</body>
+</html>
