@@ -1,0 +1,37 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from mock_llm import generate
+
+app = Flask(__name__)
+CORS(app)
+
+MODEL_CONFIGS = {
+    # Content
+    "blog-articles":   {"temperature": 0.7, "max_tokens": 1024, "style": "long-form editorial"},
+    "social-media":    {"temperature": 0.9, "max_tokens": 256,  "style": "punchy and engaging"},
+    "ad-copy":         {"temperature": 0.8, "max_tokens": 300,  "style": "persuasive and direct"},
+    # Policy
+    "internal-policy": {"temperature": 0.2, "max_tokens": 1024, "style": "formal and structured"},
+    "legal-review":    {"temperature": 0.1, "max_tokens": 1024, "style": "precise and analytical"},
+    "regulatory":      {"temperature": 0.1, "max_tokens": 1024, "style": "compliance-focused"},
+    # Communications
+    "email-drafts":    {"temperature": 0.5, "max_tokens": 512,  "style": "professional and clear"},
+    "press-releases":  {"temperature": 0.4, "max_tokens": 768,  "style": "newsworthy and concise"},
+    "presentations":   {"temperature": 0.6, "max_tokens": 768,  "style": "structured and compelling"},
+}
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_message = data.get("message", "")
+    config_name = data.get("config", "blog-articles")
+    config = MODEL_CONFIGS.get(config_name, MODEL_CONFIGS["blog-articles"])
+    response = generate(user_message, config)
+    return jsonify({"reply": response, "config_used": config_name})
+
+@app.route("/configs", methods=["GET"])
+def get_configs():
+    return jsonify(list(MODEL_CONFIGS.keys()))
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
