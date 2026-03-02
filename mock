@@ -1,0 +1,9 @@
+import time
+
+def generate(prompt: str, config: dict) -> str:
+    """
+    Mock response — replace this function with your real model later.
+    The signature should stay the same.
+    """
+    time.sleep(0.5)  # simulate latency
+    return f"[Mock response to]: {prompt}"
