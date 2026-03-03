@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Ask</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left { display: flex; align-items: center; gap: 20px; }
+
+    #back-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: var(--white);
+    }
+
+    .topbar-badge {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      background: var(--brown-mid);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--brown-warm);
+    }
+
+    /* ── WORKSPACE ── */
+    #workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── LEFT: CHAT PANEL ── */
+    #chat-panel {
+      width: 42%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1c1c1c;
+      background: #050505;
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .clear-btn {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: color 0.2s;
+    }
+
+    .clear-btn:hover { color: var(--brown-light); }
+
+    /* Chat messages */
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    /* Welcome state */
+    #chat-welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .welcome-icon { font-size: 32px; opacity: 0.3; }
+
+    .welcome-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--white);
+      opacity: 0.6;
+    }
+
+    .welcome-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 280px;
+    }
+
+    /* Suggested questions */
+    .suggested-questions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .suggested-q {
+      padding: 10px 14px;
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+
+    .suggested-q:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    /* Message bubbles */
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: msgIn 0.25s ease;
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { align-items: flex-end; }
+    .message.assistant { align-items: flex-start; }
+
+    .bubble {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .message.user .bubble {
+      background: var(--brown-mid);
+      border: 1px solid var(--brown-warm);
+      color: var(--white);
+      border-radius: 8px 8px 2px 8px;
+    }
+
+    .message.assistant .bubble {
+      background: #111;
+      border: 1px solid #1c1c1c;
+      color: #c0b5ac;
+      border-radius: 8px 8px 8px 2px;
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
+    /* Typing indicator */
+    .typing-bubble {
+      background: #111;
+      border: 1px solid #1c1c1c;
+      padding: 12px 16px;
+      border-radius: 8px 8px 8px 2px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: typingDot 1.2s ease infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingDot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+
+    /* Input area */
+    #chat-input-area {
+      padding: 16px 20px;
+      border-top: 1px solid #1c1c1c;
+      background: #0a0a0a;
+      flex-shrink: 0;
+    }
+
+    #input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #chat-input {
+      flex: 1;
+      background: #111;
+      color: var(--white);
+      border: 1px solid #2a1f1a;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+      max-height: 120px;
+    }
+
+    #chat-input:focus { border-color: var(--brown-light); }
+    #chat-input::placeholder { color: #3a2a20; }
+
+    #send-btn {
+      padding: 10px 20px;
+      background: var(--brown-warm);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    #send-btn:hover { background: var(--brown-light); color: var(--black); }
+    #send-btn:disabled { background: #2a1f1a; color: var(--text-muted); cursor: not-allowed; }
+
+    .input-hint {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* ── RIGHT: RESULTS PANEL ── */
+    #results-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #0d0d0d;
+    }
+
+    /* Placeholder */
+    #results-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .placeholder-icon { font-size: 36px; opacity: 0.3; }
+    #results-placeholder p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+    /* Results content */
+    #results-content {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+
+    #results-content::-webkit-scrollbar { width: 4px; }
+    #results-content::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    /* Loading state */
+    #results-loading {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--text-muted);
+    }
+
+    .loading-spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #1c1c1c;
+      border-top-color: var(--brown-light);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; }
+
+    /* Result sections */
+    .result-section {
+      padding: 20px 24px;
+      border-bottom: 1px solid #1c1c1c;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-section:last-child { border-bottom: none; }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #1c1c1c;
+    }
+
+    /* ── SUMMARY SECTION ── */
+    #summary-section { background: #0a0a0a; }
+
+    .summary-text {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--white);
+      font-weight: 300;
+    }
+
+    .summary-text strong { color: var(--brown-light); font-weight: 600; }
+
+    /* ── SOURCE SECTION ── */
+    #source-section {}
+
+    .source-passage {
+      background: #111;
+      border-left: 3px solid var(--brown-warm);
+      padding: 14px 16px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #c0b5ac;
+      position: relative;
+    }
+
+    .source-passage:last-child { margin-bottom: 0; }
+
+    .highlight {
+      background: rgba(196,154,108,0.2);
+      color: var(--brown-pale);
+      border-radius: 2px;
+      padding: 0 3px;
+    }
+
+    /* ── EXAMPLES SECTION ── */
+    #examples-section {}
+
+    .examples-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .example-card {
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      padding: 14px 16px;
+      transition: border-color 0.2s;
+    }
+
+    .example-card:hover { border-color: var(--brown-warm); }
+
+    .example-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      margin-bottom: 6px;
+    }
+
+    .example-text {
+      font-size: 13px;
+      color: #c0b5ac;
+      line-height: 1.7;
+    }
+
+    .example-text strong { color: var(--white); }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Ask</div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div id="workspace">
+
+    <!-- LEFT: CHAT -->
+    <div id="chat-panel">
+      <div class="panel-header">
+        <span class="panel-label">Ask a Question</span>
+        <button class="clear-btn" onclick="clearChat()">Clear</button>
+      </div>
+
+      <div id="chat-messages">
+        <div id="chat-welcome">
+          <div class="welcome-icon">✦</div>
+          <div class="welcome-title">What do you need to know?</div>
+          <div class="welcome-sub">Ask anything about content standards, brand voice, style guidelines, or writing best practices.</div>
+          <div class="suggested-questions">
+            <button class="suggested-q" onclick="askSuggested(this)">What is our brand voice and tone?</button>
+            <button class="suggested-q" onclick="askSuggested(this)">How should I write a press release headline?</button>
+            <button class="suggested-q" onclick="askSuggested(this)">What are the rules for using acronyms?</button>
+            <button class="suggested-q" onclick="askSuggested(this)">When should I use active vs passive voice?</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="chat-input-area">
+        <div id="input-row">
+          <textarea id="chat-input" rows="2" placeholder="Ask a question about content, style, or brand standards..."></textarea>
+          <button id="send-btn" onclick="sendMessage()">Ask →</button>
+        </div>
+        <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div id="results-panel">
+
+      <div id="results-placeholder">
+        <div class="placeholder-icon">◈</div>
+        <p>Results will appear here</p>
+      </div>
+
+      <div id="results-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Searching knowledge base...</div>
+      </div>
+
+      <div id="results-content">
+
+        <!-- SUMMARY -->
+        <div class="result-section" id="summary-section">
+          <div class="section-label">Summary</div>
+          <div class="summary-text" id="summary-text"></div>
+        </div>
+
+        <!-- SOURCE PASSAGES -->
+        <div class="result-section" id="source-section">
+          <div class="section-label">From the Knowledge Base</div>
+          <div id="source-passages"></div>
+        </div>
+
+        <!-- EXAMPLES -->
+        <div class="result-section" id="examples-section">
+          <div class="section-label">Examples</div>
+          <div class="examples-grid" id="examples-grid"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── MOCK KNOWLEDGE BASE ──
+    const KNOWLEDGE_BASE = [
+      {
+        topic: "brand voice",
+        keywords: ["brand", "voice", "tone", "personality", "writing style", "character"],
+        summary: "Our brand voice is <strong>clear, confident, and human</strong>. We write the way a knowledgeable colleague speaks — direct without being cold, approachable without being casual. Every piece of content should feel like it came from the same person.",
+        passages: [
+          "Our brand voice has three core qualities: <span class='highlight'>clarity, confidence, and warmth</span>. Clarity means we say exactly what we mean with no jargon or filler. Confidence means we make statements rather than hedging with words like 'perhaps' or 'might'. Warmth means we acknowledge the reader as a person, not a target.",
+          "Tone adjusts by context — <span class='highlight'>more formal in policy documents, more conversational in internal communications</span> — but the underlying voice stays consistent. Think of it as the same person dressing differently for different occasions.",
+        ],
+        examples: [
+          { label: "Brand Voice — Do", text: "<strong>\"We've updated the expense policy to make reimbursement faster.\"</strong> — Direct, clear, focused on the benefit." },
+          { label: "Brand Voice — Don't", text: "<strong>\"Please be advised that modifications have been implemented with respect to the expense reimbursement framework.\"</strong> — Passive, wordy, cold." },
+          { label: "Tone Shift Example", text: "Internal memo: <strong>\"Here's what changed and why it matters to you.\"</strong> — Conversational. Policy doc: <strong>\"This policy applies to all full-time employees effective Q1.\"</strong> — Formal." },
+        ]
+      },
+      {
+        topic: "headlines",
+        keywords: ["headline", "heading", "title", "press release", "h1", "subject line"],
+        summary: "Headlines should be <strong>specific, scannable, and front-loaded</strong>. The most important information goes first. A strong headline tells the reader exactly what they're getting before they read a single word of the body.",
+        passages: [
+          "Press release headlines follow a specific formula: <span class='highlight'>lead with the action, name the subject, and include a concrete detail</span>. Avoid starting with the company name — lead with what happened. Keep headlines under 12 words where possible.",
+          "<span class='highlight'>Front-loading</span> means placing the most newsworthy or important word in the first three words of the headline. Readers scan left to right and often only read the first few words before deciding whether to continue.",
+        ],
+        examples: [
+          { label: "Press Release Headline — Strong", text: "<strong>\"New Employee Portal Cuts Onboarding Time by 40%\"</strong> — Action first, specific result, no filler." },
+          { label: "Press Release Headline — Weak", text: "<strong>\"Company Announces Updates to Employee Onboarding System\"</strong> — Vague action, no benefit, could describe anything." },
+          { label: "Email Subject Line", text: "<strong>\"Your Q1 Review Is Due Friday\"</strong> — Specific deadline, personal pronoun, creates urgency without being alarmist." },
+        ]
+      },
+      {
+        topic: "acronyms",
+        keywords: ["acronym", "abbreviation", "abbreviate", "shorten", "initialism"],
+        summary: "Always <strong>spell out acronyms on first use</strong>, followed by the acronym in parentheses. After that, the acronym alone is fine. Never assume the reader knows what an acronym means — even common ones vary by industry and department.",
+        passages: [
+          "The rule is: <span class='highlight'>spell out the full term first, then put the acronym in parentheses</span>. Example: \"The Service Level Agreement (SLA) defines response times.\" After that first use, \"SLA\" alone is acceptable throughout the document.",
+          "<span class='highlight'>Internal acronyms specific to our organization should always be defined</span>, even in internal documents. What is obvious to one team may be unknown to another. When in doubt, spell it out.",
+        ],
+        examples: [
+          { label: "Correct First Use", text: "<strong>\"The Knowledge Base (KB) article covers all onboarding steps. Refer to the KB whenever you have questions.\"</strong>" },
+          { label: "Incorrect First Use", text: "<strong>\"The KB article covers all onboarding steps.\"</strong> — Reader may not know what KB means on first encounter." },
+          { label: "When to Skip the Acronym", text: "If you only use the term once, skip the acronym entirely: <strong>\"The Service Level Agreement defines response times.\"</strong> No need to introduce an acronym you'll never use again." },
+        ]
+      },
+      {
+        topic: "active voice",
+        keywords: ["active", "passive", "voice", "passive voice", "active voice", "sentence structure"],
+        summary: "Use <strong>active voice by default</strong>. Active voice is clearer, shorter, and more direct. Reserve passive voice for situations where the subject is unknown, unimportant, or when you deliberately want to avoid assigning responsibility.",
+        passages: [
+          "<span class='highlight'>Active voice: the subject performs the action.</span> Passive voice: the subject receives the action. \"The manager approved the request\" is active. \"The request was approved by the manager\" is passive. The active version is shorter and clearer.",
+          "<span class='highlight'>Passive voice is appropriate</span> when the actor is unknown (\"The server was restarted\"), when the action is more important than who did it (\"The policy was updated in 2025\"), or in formal/legal writing where assigning blame is inappropriate.",
+        ],
+        examples: [
+          { label: "Active — Preferred", text: "<strong>\"The communications team publishes all external content.\"</strong> — Clear who does what." },
+          { label: "Passive — Avoid", text: "<strong>\"All external content is published by the communications team.\"</strong> — Wordier, less direct." },
+          { label: "Passive — Acceptable", text: "<strong>\"Three accounts were flagged during the audit.\"</strong> — The actor (the system or auditor) is less important than the fact." },
+        ]
+      },
+      {
+        topic: "formatting",
+        keywords: ["format", "bullet", "list", "bold", "italic", "header", "structure", "whitespace", "spacing"],
+        summary: "Formatting should <strong>serve the reader, not decorate the page</strong>. Use bullets for genuinely list-like content, headers to help readers navigate long documents, and bold sparingly to highlight what actually matters. When in doubt, use less formatting.",
+        passages: [
+          "<span class='highlight'>Bold text should be used for genuinely critical information</span> — not for emphasis on every other sentence. If everything is bold, nothing is. Reserve bold for terms being defined, key warnings, or required actions.",
+          "<span class='highlight'>Use bullet points only when items are truly parallel and list-like</span>. Sentences that flow naturally as prose should stay as prose. Converting continuous reasoning into bullets fragments the logic and makes content harder to follow.",
+        ],
+        examples: [
+          { label: "Good Use of Bullets", text: "<strong>Required items to bring:</strong><br>• Employee ID<br>• Signed form<br>• Photo ID<br><em>Genuinely list-like, parallel, scannable.</em>" },
+          { label: "Bad Use of Bullets", text: "Breaking a single flowing explanation into five bullets just because it feels organized — this fragments ideas that belong together as a paragraph." },
+          { label: "Bold Used Well", text: "<strong>\"Do not submit expenses more than 30 days after travel.\"</strong> — Bold on the key constraint is justified here." },
+        ]
+      },
+      {
+        topic: "email writing",
+        keywords: ["email", "subject", "opening", "closing", "sign off", "greeting", "reply", "thread"],
+        summary: "Effective emails are <strong>short, specific, and clear about what they need</strong>. Lead with the most important thing. State any required action and deadline in the first paragraph. Subject lines should tell the reader exactly what the email is about.",
+        passages: [
+          "<span class='highlight'>The first sentence of an email should earn its place.</span> Skip lengthy context-setting or pleasantries in internal emails. Get to the point: state what happened, what you need, or what the reader should know within the first two sentences.",
+          "<span class='highlight'>Every email that requires action should state the action and deadline explicitly</span>: \"Please confirm your attendance by Thursday, March 6.\" Vague asks like \"Let me know what you think\" generate unnecessary back-and-forth.",
+        ],
+        examples: [
+          { label: "Strong Email Opening", text: "<strong>\"The Q1 budget report is ready for your review. Please approve by Friday EOD so we can submit to Finance on Monday.\"</strong>" },
+          { label: "Weak Email Opening", text: "<strong>\"Hope you're doing well! I wanted to reach out about the Q1 budget report that was recently completed by the team...\"</strong>" },
+          { label: "Clear Action Request", text: "<strong>\"Action needed: Reply to this email with your preferred time slot by Wednesday.\"</strong> — Explicit, dated, no ambiguity." },
+        ]
+      },
+    ];
+
+    let chatHistory = [];
+    let isLoading = false;
+
+    // ── KEYBOARD HANDLER ──
+    document.getElementById('chat-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ── SEND MESSAGE ──
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text || isLoading) return;
+      input.value = '';
+      input.style.height = 'auto';
+      askQuestion(text);
+    }
+
+    function askSuggested(btn) {
+      askQuestion(btn.textContent);
+    }
+
+    function askQuestion(question) {
+      // Hide welcome
+      const welcome = document.getElementById('chat-welcome');
+      if (welcome) welcome.remove();
+
+      isLoading = true;
+      document.getElementById('send-btn').disabled = true;
+
+      // Add user message
+      addMessage('user', question);
+      chatHistory.push({ role: 'user', text: question });
+
+      // Show typing indicator
+      const typingId = showTyping();
+
+      // Show loading on right panel
+      document.getElementById('results-placeholder').style.display = 'none';
+      document.getElementById('results-content').style.display = 'none';
+      document.getElementById('results-loading').style.display = 'flex';
+
+      // Simulate search delay
+      setTimeout(() => {
+        removeTyping(typingId);
+        const result = searchKnowledgeBase(question);
+        displayResult(result, question);
+        isLoading = false;
+        document.getElementById('send-btn').disabled = false;
+      }, 1200);
+    }
+
+    // ── KNOWLEDGE BASE SEARCH ──
+    function searchKnowledgeBase(question) {
+      const q = question.toLowerCase();
+
+      // Score each topic by keyword matches
+      let bestMatch = null;
+      let bestScore = 0;
+
+      KNOWLEDGE_BASE.forEach(entry => {
+        let score = 0;
+        entry.keywords.forEach(kw => {
+          if (q.includes(kw)) score += 2;
+        });
+        // Partial word matches
+        entry.keywords.forEach(kw => {
+          if (kw.split('').some((_, i) => kw.slice(0, i + 3).length >= 3 && q.includes(kw.slice(0, i + 3)))) score += 0.5;
+        });
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = entry;
+        }
+      });
+
+      // Fallback if nothing matched well
+      if (!bestMatch || bestScore === 0) {
+        return {
+          summary: "I didn't find an exact match in the knowledge base for that question. Try rephrasing, or ask about <strong>brand voice, headlines, acronyms, active voice, formatting, or email writing</strong>.",
+          passages: ["<span class='highlight'>The knowledge base currently covers:</span> brand voice and tone, headline writing, acronym usage, active vs passive voice, formatting guidelines, and email writing best practices."],
+          examples: [
+            { label: "Try asking", text: "<strong>\"What is our brand voice?\"</strong>" },
+            { label: "Try asking", text: "<strong>\"How should I write a headline?\"</strong>" },
+            { label: "Try asking", text: "<strong>\"When should I use passive voice?\"</strong>" },
+          ],
+          shortAnswer: "No direct match found."
+        };
+      }
+
+      return {
+        summary: bestMatch.summary,
+        passages: bestMatch.passages,
+        examples: bestMatch.examples,
+        shortAnswer: `Found guidance on <strong>${bestMatch.topic}</strong>.`
+      };
+    }
+
+    // ── DISPLAY RESULT ──
+    function displayResult(result, question) {
+      // Add assistant message to chat
+      addMessage('assistant', stripHtml(result.shortAnswer) || 'Here\'s what I found in the knowledge base.');
+
+      // Populate right panel
+      document.getElementById('results-loading').style.display = 'none';
+      document.getElementById('results-content').style.display = 'flex';
+
+      // Summary
+      document.getElementById('summary-text').innerHTML = result.summary;
+
+      // Source passages
+      const passagesEl = document.getElementById('source-passages');
+      passagesEl.innerHTML = result.passages.map(p =>
+        `<div class="source-passage">${p}</div>`
+      ).join('');
+
+      // Examples
+      const examplesEl = document.getElementById('examples-grid');
+      examplesEl.innerHTML = result.examples.map(ex =>
+        `<div class="example-card">
+          <div class="example-label">${ex.label}</div>
+          <div class="example-text">${ex.text}</div>
+        </div>`
+      ).join('');
+    }
+
+    // ── CHAT HELPERS ──
+    function addMessage(role, text) {
+      const messages = document.getElementById('chat-messages');
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.innerHTML = `
+        <div class="bubble">${escapeHtml(text)}</div>
+        <div class="message-time">${now}</div>`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function showTyping() {
+      const messages = document.getElementById('chat-messages');
+      const id = 'typing-' + Date.now();
+      const div = document.createElement('div');
+      div.className = 'message assistant';
+      div.id = id;
+      div.innerHTML = `<div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      return id;
+    }
+
+    function removeTyping(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function clearChat() {
+      const messages = document.getElementById('chat-messages');
+      messages.innerHTML = `
+        <div id="chat-welcome">
+          <div class="welcome-icon">✦</div>
+          <div class="welcome-title">What do you need to know?</div>
+          <div class="welcome-sub">Ask anything about content standards, brand voice, style guidelines, or writing best practices.</div>
+          <div class="suggested-questions">
+            <button class="suggested-q" onclick="askSuggested(this)">What is our brand voice and tone?</button>
+            <button class="suggested-q" onclick="askSuggested(this)">How should I write a press release headline?</button>
+            <button class="suggested-q" onclick="askSuggested(this)">What are the rules for using acronyms?</button>
+            <button class="suggested-q" onclick="askSuggested(this)">When should I use active vs passive voice?</button>
+          </div>
+        </div>`;
+      document.getElementById('results-content').style.display = 'none';
+      document.getElementById('results-loading').style.display = 'none';
+      document.getElementById('results-placeholder').style.display = 'flex';
+      chatHistory = [];
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function stripHtml(str) {
+      return str.replace(/<[^>]+>/g, '');
+    }
+  </script>
+
+</body>
+</html>
