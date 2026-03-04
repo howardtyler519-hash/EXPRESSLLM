@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scroll Nav Component</title>
+  <style>
+
+    .kb-article-content,
+    .sp-page-root {
+      overflow: visible !important;
+      height: auto !important;
+    }
+
+    .sn-component {
+      display: flex;
+      align-items: flex-start;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .sn-nav {
+      width: 220px;
+      min-width: 220px;
+      padding: 0 24px 0 0;
+      border-right: 1px solid #e0e0e0;
+      position: -webkit-sticky;
+      position: sticky;
+      top: 80px;
+    }
+
+    .sn-nav-inner { padding: 4px 0; }
+
+    .sn-nav-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .sn-nav a {
+      display: block;
+      padding: 8px 12px;
+      color: #555;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 2px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .sn-nav a:hover { background: #f5f5f5; color: #111; border-left-color: #c49a6c; }
+    .sn-nav a.active { background: #faf6f0; color: #6b3a1f; border-left-color: #c49a6c; font-weight: 600; }
+    .sn-nav a.sub { padding-left: 24px; font-size: 12px; color: #888; }
+    .sn-nav a.sub:hover { color: #333; }
+    .sn-nav a.sub.active { color: #6b3a1f; }
+
+    .sn-content { flex: 1; padding: 0 0 0 32px; min-width: 0; }
+
+    .sn-section { padding-bottom: 48px; border-bottom: 1px solid #f0f0f0; margin-bottom: 48px; }
+    .sn-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .sn-section-title { font-size: 20px; font-weight: 700; color: #111; margin: 0 0 6px 0; }
+    .sn-section-sub { font-size: 13px; color: #999; margin: 0 0 20px 0; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0; }
+    .sn-section p { font-size: 14px; line-height: 1.8; color: #444; margin-bottom: 16px; }
+    .sn-section h3 { font-size: 15px; font-weight: 600; color: #222; margin: 24px 0 10px; }
+    .sn-section ul, .sn-section ol { padding-left: 20px; margin-bottom: 16px; }
+    .sn-section ul li, .sn-section ol li { font-size: 14px; color: #444; line-height: 1.8; margin-bottom: 4px; }
+
+    .sn-callout {
+      background: #fffbf0;
+      border-left: 4px solid #c49a6c;
+      padding: 14px 18px;
+      border-radius: 0 4px 4px 0;
+      margin: 20px 0;
+      font-size: 13px;
+      color: #6b4c1a;
+      line-height: 1.6;
+    }
+
+    .sn-steps { display: table; width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    .sn-step { display: table-row; }
+    .sn-step-num { display: table-cell; width: 32px; vertical-align: top; padding: 2px 12px 16px 0; }
+    .sn-step-num-inner { width: 24px; height: 24px; border-radius: 50%; background: #6b3a1f; color: #fff; font-size: 12px; font-weight: 700; text-align: center; line-height: 24px; }
+    .sn-step-body { display: table-cell; vertical-align: top; padding-bottom: 16px; font-size: 14px; color: #333; line-height: 1.7; }
+    .sn-step-body strong { display: block; margin-bottom: 4px; color: #111; }
+
+  </style>
+</head>
+<body>
+
+<div class="sn-component">
+
+  <div class="sn-nav">
+    <div class="sn-nav-inner">
+      <div class="sn-nav-label">On This Page</div>
+      <a href="#overview">Overview</a>
+      <a href="#requirements">Requirements</a>
+        <a href="#req-access" class="sub">Access &amp; Permissions</a>
+        <a href="#req-materials" class="sub">Required Materials</a>
+      <a href="#steps">Step-by-Step</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+      <a href="#contact">Contact &amp; Support</a>
+    </div>
+  </div>
+
+  <div class="sn-content">
+
+    <div class="sn-section" id="overview">
+      <h2 class="sn-section-title">Overview</h2>
+      <p class="sn-section-sub">Last updated: February 2026 &nbsp;·&nbsp; IT Support &nbsp;·&nbsp; KB0010042</p>
+      <p>This article explains the complete process for completing this task from start to finish. Read through each section before beginning to make sure you have everything you need.</p>
+      <p>This process applies to all full-time employees. Contractors should contact their project manager for the appropriate workflow.</p>
+      <div class="sn-callout">💡 <strong>Note:</strong> This process was updated in February 2026. If you completed this process before that date, some steps may look different.</div>
+    </div>
+
+    <div class="sn-section" id="requirements">
+      <h2 class="sn-section-title">Requirements</h2>
+      <p class="sn-section-sub">Make sure you have the following before you begin.</p>
+      <h3 id="req-access">Access &amp; Permissions</h3>
+      <ul>
+        <li>Active company account with standard employee access</li>
+        <li>VPN connection if working remotely</li>
+        <li>Manager approval if your role requires it — check with your supervisor</li>
+      </ul>
+      <h3 id="req-materials">Required Materials</h3>
+      <ul>
+        <li>Your employee ID number</li>
+        <li>Any relevant reference numbers or case IDs</li>
+        <li>Supporting documentation (if applicable)</li>
+      </ul>
+    </div>
+
+    <div class="sn-section" id="steps">
+      <h2 class="sn-section-title">Step-by-Step</h2>
+      <p class="sn-section-sub">Follow these steps in order. Do not skip ahead.</p>
+      <div class="sn-steps">
+        <div class="sn-step">
+          <div class="sn-step-num"><div class="sn-step-num-inner">1</div></div>
+          <div class="sn-step-body"><strong>Log into the portal</strong>Navigate to the company intranet and sign in with your standard credentials. If you cannot log in, contact the IT helpdesk before continuing.</div>
+        </div>
+        <div class="sn-step">
+          <div class="sn-step-num"><div class="sn-step-num-inner">2</div></div>
+          <div class="sn-step-body"><strong>Navigate to the correct section</strong>From the homepage, select <strong>My Requests</strong> from the top navigation, then choose <strong>New Request</strong> from the dropdown.</div>
+        </div>
+        <div class="sn-step">
+          <div class="sn-step-num"><div class="sn-step-num-inner">3</div></div>
+          <div class="sn-step-body"><strong>Complete all required fields</strong>Fill in every field marked with an asterisk (*). Leave optional fields blank if you are unsure — you can update them later.</div>
+        </div>
+        <div class="sn-step">
+          <div class="sn-step-num"><div class="sn-step-num-inner">4</div></div>
+          <div class="sn-step-body"><strong>Submit and record your confirmation number</strong>Click <strong>Submit</strong> and note the confirmation number shown on the next screen. You will need this if you contact support.</div>
+        </div>
+      </div>
+      <div class="sn-callout">⚠ <strong>Important:</strong> Submissions are final once sent. Double-check all fields before clicking Submit.</div>
+    </div>
+
+    <div class="sn-section" id="troubleshooting">
+      <h2 class="sn-section-title">Troubleshooting</h2>
+      <p class="sn-section-sub">Common issues and how to resolve them.</p>
+      <h3>I cannot log into the portal</h3>
+      <p>Make sure you are connected to the VPN if working remotely. If your password has expired, use the self-service reset tool at the login screen. If neither works, contact IT at extension 4401.</p>
+      <h3>My submission is not going through</h3>
+      <p>Check that all required fields are filled in and that your attachments are under the 10MB file size limit. Clear your browser cache and try again. If the issue persists, use a different browser.</p>
+      <h3>I did not receive a confirmation email</h3>
+      <p>Check your spam or junk folder. Allow up to 15 minutes for the email to arrive. If you still have not received it, log back in and check <strong>My Requests</strong> to confirm the submission went through.</p>
+    </div>
+
+    <div class="sn-section" id="contact">
+      <h2 class="sn-section-title">Contact &amp; Support</h2>
+      <p class="sn-section-sub">Need additional help? Reach out through any of the channels below.</p>
+      <ul>
+        <li><strong>IT Helpdesk:</strong> Extension 4401 · Monday–Friday, 8am–6pm</li>
+        <li><strong>After-hours support:</strong> 1-800-555-0199</li>
+        <li><strong>Submit a ticket:</strong> Use the <strong>Get Help</strong> button in ServiceNow</li>
+        <li><strong>Walk-in support:</strong> Building 3, Room 104</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!--
+  Minimal script: finds every parent with overflow:auto/hidden and
+  sets them to visible so position:sticky can work.
+  Runs once on load. No libraries, no dependencies.
+-->
+<script>
+(function(){
+  var el = document.querySelector('.sn-nav');
+  while(el && el !== document.body){
+    var o = getComputedStyle(el).overflow;
+    if(o === 'auto' || o === 'hidden' || o === 'scroll'){
+      el.style.setProperty('overflow','visible','important');
+      el.style.setProperty('height','auto','important');
+    }
+    el = el.parentElement;
+  }
+})();
+</script>
+
+</body>
+</html>
