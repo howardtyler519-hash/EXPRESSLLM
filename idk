@@ -1,7 +1,6 @@
 let el = document.querySelector('.sn-nav');
 while(el) {
   const s = getComputedStyle(el);
-  if(s.overflow !== 'visible' || s.overflowY !== 'visible') 
-    console.log(el.tagName, el.className, 'overflow:', s.overflow, s.overflowY);
+  console.log(el.tagName, el.className, '| overflow:', s.overflow, '| position:', s.position, '| height:', s.height);
   el = el.parentElement;
 }
