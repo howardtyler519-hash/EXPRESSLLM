@@ -1,0 +1,17 @@
+Copy both files into your EXPRESS/frontend/ folder. Then in index.html find this one line:
+html<ul class="nav-links">
+  <li><a href="#">Dashboard</a></li>
+  <li><a href="knowledge.html">Knowledge</a></li>
+  <li><a href="#">History</a></li>
+  <li><a href="#">Settings</a></li>
+</ul>
+Replace it with:
+html<ul class="nav-links">
+  <li><a href="#">Dashboard</a></li>
+  <li><a href="knowledge.html">Knowledge</a></li>
+  <li><a href="help.html">Help</a></li>
+  <li><a href="contact.html">Contact</a></li>
+  <li><a href="#">History</a></li>
+  <li><a href="#">Settings</a></li>
+</ul>
+That's the only change to index.html — two new list items added between Knowledge and History.
