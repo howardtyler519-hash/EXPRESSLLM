@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Help</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 18px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.95);
+      border-bottom: 1px solid #1c1c1c;
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      letter-spacing: 6px;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+
+    .nav-links a {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover, .nav-links a.active { color: var(--brown-light); }
+
+    /* ── PAGE ── */
+    #page {
+      padding: 120px 60px 80px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .page-eyebrow {
+      font-size: 11px;
+      letter-spacing: 5px;
+      color: var(--brown-light);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      letter-spacing: 4px;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .page-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 500px;
+      margin-bottom: 60px;
+    }
+
+    /* ── QUICK LINKS ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 60px;
+    }
+
+    .quick-card {
+      background: #0a0a0a;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      padding: 22px 20px;
+      text-decoration: none;
+      display: block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .quick-card:hover { border-color: var(--brown-warm); transform: translateY(-2px); }
+
+    .quick-card-icon { font-size: 20px; margin-bottom: 10px; }
+    .quick-card-title { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+    .quick-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── FAQ ── */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1c1c1c;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 60px;
+    }
+
+    .faq-item {
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      padding: 16px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      background: #0a0a0a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: default;
+    }
+
+    .faq-question::after {
+      content: '↓';
+      color: var(--brown-light);
+      font-size: 12px;
+    }
+
+    .faq-answer {
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      background: #060606;
+      border-top: 1px solid #1c1c1c;
+    }
+
+    /* ── GETTING STARTED GUIDE ── */
+    .guide-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .guide-step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      padding: 20px;
+      background: #0a0a0a;
+      border: 1px solid #1c1c1c;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+
+    .guide-step:hover { border-color: var(--brown-warm); }
+
+    .guide-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--brown-mid);
+      border: 1px solid var(--brown-warm);
+      color: var(--brown-light);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .guide-step-title { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+    .guide-step-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">EXPRESS</a>
+    <ul class="nav-links">
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="knowledge.html">Knowledge</a></li>
+      <li><a href="help.html" class="active">Help</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="#">History</a></li>
+      <li><a href="#">Settings</a></li>
+    </ul>
+  </nav>
+
+  <div id="page">
+    <p class="page-eyebrow">Support & Guidance</p>
+    <h1 class="page-title">HELP</h1>
+    <p class="page-sub">Everything you need to get started with EXPRESS, understand its features, and get support when things go wrong.</p>
+
+    <!-- QUICK LINKS -->
+    <div class="quick-grid">
+      <a class="quick-card" href="ask.html">
+        <div class="quick-card-icon">✦</div>
+        <div class="quick-card-title">Ask a Question</div>
+        <div class="quick-card-desc">Search the knowledge base for answers to content and style questions.</div>
+      </a>
+      <a class="quick-card" href="knowledge.html">
+        <div class="quick-card-icon">◈</div>
+        <div class="quick-card-title">Knowledge Base</div>
+        <div class="quick-card-desc">Browse and manage ServiceNow articles directly from EXPRESS.</div>
+      </a>
+      <a class="quick-card" href="contact.html">
+        <div class="quick-card-icon">✉</div>
+        <div class="quick-card-title">Contact the Team</div>
+        <div class="quick-card-desc">Reach out to the content team, IT support, or product owners.</div>
+      </a>
+    </div>
+
+    <!-- GETTING STARTED -->
+    <p class="section-label" style="margin-bottom:20px;">Getting Started</p>
+    <div class="guide-steps" style="margin-bottom:60px;">
+      <div class="guide-step">
+        <div class="guide-step-num">1</div>
+        <div>
+          <div class="guide-step-title">Choose your mode</div>
+          <div class="guide-step-desc">From the homepage select Ask, Edit, or Build depending on what you need. Ask answers questions from the knowledge base. Edit improves existing content. Build creates new templates.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">2</div>
+        <div>
+          <div class="guide-step-title">Input your content</div>
+          <div class="guide-step-desc">Paste or type your content into the left panel. You can also upload a .txt, .md, .docx, or .pdf file using the upload area in Edit mode.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">3</div>
+        <div>
+          <div class="guide-step-title">Review the output</div>
+          <div class="guide-step-desc">The right panel shows your results. In Edit mode use the Tracked and Clean toggle to review changes. In Build mode preview your template before copying the HTML.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-step-num">4</div>
+        <div>
+          <div class="guide-step-title">Submit for review via CURE</div>
+          <div class="guide-step-desc">When your content is ready, submit it through CURE for product owner review and approval before publishing.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <p class="section-label">Frequently Asked Questions</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-question">What file types can I upload in Edit mode?</div>
+        <div class="faq-answer">.txt, .md, .docx, and .pdf files are all supported. Files are parsed automatically when uploaded.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Does EXPRESS connect to ServiceNow?</div>
+        <div class="faq-answer">The Knowledge section connects to your ServiceNow instance to manage KB articles. API credentials are required — contact IT to set this up.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Who approves content changes?</div>
+        <div class="faq-answer">Product owners review and approve all changes through CURE. Submit your content there once it's ready.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Where do I report a bug or request a feature?</div>
+        <div class="faq-answer">Use the Contact page to reach the product team, or submit a ticket through ServiceNow.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Can I use EXPRESS on mobile?</div>
+        <div class="faq-answer">EXPRESS is optimized for desktop use. Mobile access is possible but some features may not display correctly on smaller screens.</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
