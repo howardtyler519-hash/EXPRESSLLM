@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Nav Component</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── SERVICENOW FIX ── */
+    .kb-article-content {
+      overflow: visible !important;
+    }
+
+    :root {
+      --nav-width: 160px;
+      --nav-gap: 40px;
+      --accent: #000;
+      --text-primary: #1a1a1a;
+      --text-secondary: #555;
+      --text-muted: #888;
+      --border: #e0e0e0;
+      --font-body: 'Source Sans 3', sans-serif;
+    }
+
+    /* ── OUTER WRAPPER — holds hero + body as a column ── */
+    .sn-outer {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* ── HERO — full width, sits above nav+content ── */
+    .sn-hero {
+      width: 100%;
+      margin-bottom: 32px;
+      line-height: 0;
+    }
+
+    .sn-hero img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Remove hero block entirely if unused — no gap left behind */
+    .sn-hero:empty,
+    .sn-hero.hidden { display: none; }
+
+    /* ── BODY ROW — nav + content side by side ── */
+    .sn-component {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    /* ── LEFT NAV ── */
+    .sn-nav {
+      width: var(--nav-width);
+      min-width: var(--nav-width);
+      padding-right: var(--nav-gap);
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+    }
+
+    .sn-nav-inner { padding: 4px 0; }
+
+    .sn-nav a {
+      display: block;
+      padding: 5px 0 5px 10px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 1px;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      font-weight: 400;
+    }
+
+    .sn-nav a:hover { color: var(--text-primary); }
+
+    .sn-nav a.active {
+      color: var(--text-primary);
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .sn-nav a.sub {
+      padding-left: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .sn-nav a.sub:hover { color: var(--text-secondary); }
+    .sn-nav a.sub.active { color: var(--text-primary); }
+
+    .sn-back-top {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-left: none !important;
+      padding-left: 0 !important;
+    }
+
+    .sn-back-top:hover { color: var(--text-primary); }
+    .sn-back-top svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+    /* ── RIGHT CONTENT ── */
+    .sn-content {
+      flex: 1;
+      min-width: 0;
+      border-left: 1px solid var(--border);
+      padding-left: var(--nav-gap);
+    }
+
+    .sn-section-title {
+      font-family: Georgia, serif;
+      font-size: 28px;
+      font-weight: normal;
+      color: var(--text-primary);
+      margin: 0 0 16px 0;
+      line-height: 1.2;
+    }
+
+    .sn-section-intro {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin: 0 0 28px 0;
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    .sn-subsection {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 40px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .sn-subsection:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .sn-subsection-body { flex: 1; min-width: 0; }
+
+    .sn-subsection-img {
+      width: 220px;
+      min-width: 220px;
+      border-radius: 2px;
+      overflow: hidden;
+      line-height: 0;
+    }
+
+    .sn-subsection-img img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .sn-subsection-img:empty { display: none; }
+
+    .sn-subsection h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 10px 0;
+    }
+
+    .sn-subsection p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin: 0 0 12px 0;
+    }
+
+    .sn-subsection p:last-child { margin-bottom: 0; }
+    .sn-subsection a { color: var(--text-primary); text-decoration: underline; font-size: 14px; }
+    .sn-subsection strong { font-weight: 600; color: var(--text-primary); }
+
+    .sn-section {
+      padding-bottom: 56px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 56px;
+    }
+
+    .sn-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sn-nav { display: none; }
+      .sn-content { border-left: none; padding-left: 0; }
+      .sn-subsection { flex-direction: column; }
+      .sn-subsection-img { width: 100%; min-width: unset; }
+      .sn-subsection-img img { height: 200px; }
+      .sn-hero img { height: 180px; }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- OUTER WRAPPER -->
+<div class="sn-outer">
+
+  <!-- OPTIONAL HERO — delete this entire div to remove, layout adjusts automatically -->
+  <div class="sn-hero">
+    <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80" alt="Building exterior">
+  </div>
+
+  <!-- NAV + CONTENT ROW -->
+  <div class="sn-component">
+
+    <!-- LEFT NAV -->
+    <div class="sn-nav">
+      <div class="sn-nav-inner">
+        <a href="#building-access">Building access</a>
+        <a href="#food-drink">Food and drink</a>
+        <a href="#health" class="active">Health and wellbeing</a>
+        <a href="#services">Services</a>
+        <a href="#travel">Travel and safety</a>
+        <a href="#coming-soon">Coming soon</a>
+        <a href="#" class="sn-back-top">
+          <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back to top
+        </a>
+      </div>
+    </div>
+
+    <!-- RIGHT CONTENT -->
+    <div class="sn-content">
+
+      <div class="sn-section" id="health">
+        <h2 class="sn-section-title">Health and wellbeing</h2>
+        <p class="sn-section-intro">Your well-being matters. From our on-site health and wellness center, physical therapy and sports medicine care, and state-of-the-art fitness center, we're here to support your wellness goals. We also offer well-being spaces for meditation, prayer and reflection, because we know health includes your mind and spirit, too.</p>
+
+        <div class="sn-subsection">
+          <div class="sn-subsection-body">
+            <h3>Health and Wellness Center</h3>
+            <p>Located on the 28th floor, the Health &amp; Wellness Center provides quick, convenient and confidential medical care to U.S. benefits-eligible employees. In addition to sick visits and acute care, licensed providers also offer general medical advice, lab work, allergy shot management and international travel preparation. Walk in or call ahead at 212-270-5555.</p>
+            <p><a href="#">Learn more</a> about the range of services offered.</p>
+            <p>Until the building is fully open, only employees located at 270 Park will be able to use the Health and Wellness Center on the 28th floor.</p>
+            <p>All other employees should use the 277 Park Health &amp; Wellness Center.</p>
+            <p><strong>Location:</strong><br>Wellness Center · 28th Floor</p>
+          </div>
+          <!-- OPTIONAL IMAGE — delete this entire div to remove -->
+          <div class="sn-subsection-img">
+            <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80" alt="Wellness center">
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- end sn-content -->
+
+  </div><!-- end sn-component -->
+
+</div><!-- end sn-outer -->
+
+</body>
+</html>
