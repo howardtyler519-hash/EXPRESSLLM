@@ -1,6 +1,1 @@
-let el = document.querySelector('.sn-nav');
-while(el) {
-  const s = getComputedStyle(el);
-  console.log(el.tagName, el.className, '| overflow:', s.overflow, '| position:', s.position, '| height:', s.height);
-  el = el.parentElement;
-}
+document.querySelector('.kb-article-content').getBoundingClientRect().left
