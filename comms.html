@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Comms</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left { display: flex; align-items: center; gap: 20px; }
+
+    #back-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: var(--white);
+    }
+
+    .topbar-badge {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      background: var(--brown-mid);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--brown-warm);
+    }
+
+    /* Legend */
+    #legend { display: flex; align-items: center; gap: 20px; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── WORKSPACE ── */
+    #workspace { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── LEFT PANEL ── */
+    #input-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1c1c1c;
+      background: #0a0a0a;
+    }
+
+    /* Comm type bar */
+    #comm-type-bar {
+      padding: 10px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    #comm-type-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    #comm-type-select {
+      flex: 1;
+      padding: 8px 12px;
+      background: #1a1208;
+      color: var(--white);
+      border: 1px solid #3d2b1f;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    #comm-type-select:focus { border-color: var(--brown-light); }
+
+    /* Instructions banner — shown when a type is selected */
+    #instructions-bar {
+      display: none;
+      padding: 10px 20px;
+      background: #1a1208;
+      border-bottom: 1px solid #3d2b1f;
+      flex-shrink: 0;
+    }
+
+    #instructions-bar.visible { display: block; }
+
+    #instructions-title {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      margin-bottom: 4px;
+    }
+
+    #instructions-text {
+      font-size: 12px;
+      color: #a09080;
+      line-height: 1.6;
+    }
+
+    /* Panel header */
+    .panel-header {
+      padding: 10px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    #word-count { font-size: 11px; color: var(--text-muted); }
+
+    /* Upload zone */
+    #upload-zone {
+      margin: 12px 20px 0;
+      border: 1px dashed #2a1f1a;
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0d0d0d;
+      flex-shrink: 0;
+    }
+
+    #upload-zone:hover, #upload-zone.dragover {
+      border-color: var(--brown-light);
+      background: #1a1208;
+    }
+
+    #upload-zone .upload-icon { font-size: 18px; opacity: 0.5; }
+
+    #upload-zone .upload-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    #upload-zone .upload-text span { color: var(--brown-light); cursor: pointer; text-decoration: underline; }
+    #upload-zone .upload-types { font-size: 10px; color: #3a2a20; letter-spacing: 1px; }
+    #file-input { display: none; }
+
+    #file-indicator {
+      margin: 6px 20px 0;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #1a1208;
+      border: 1px solid var(--brown-warm);
+      border-radius: 6px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    #file-indicator.visible { display: flex; }
+
+    #file-name { color: var(--brown-light); display: flex; align-items: center; gap: 8px; }
+    #file-name .file-icon { font-size: 14px; }
+
+    #remove-file {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    #remove-file:hover { color: #ef4444; }
+
+    #upload-loading {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 6px 20px 0;
+      flex-shrink: 0;
+    }
+
+    #upload-loading.visible { display: flex; }
+
+    .upload-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #2a1f1a;
+      border-top-color: var(--brown-light);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Text area */
+    #user-text {
+      flex: 1;
+      padding: 24px;
+      background: transparent;
+      color: #d0c5bc;
+      border: none;
+      outline: none;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.9;
+      resize: none;
+    }
+
+    #user-text::placeholder { color: #3a2a20; }
+
+    /* Controls bar */
+    #controls {
+      padding: 14px 20px;
+      border-top: 1px solid #1c1c1c;
+      background: #111;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #style-select {
+      flex: 1;
+      padding: 9px 12px;
+      background: #1a1208;
+      color: var(--white);
+      border: 1px solid #3d2b1f;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #style-select:focus { border-color: var(--brown-light); }
+
+    #edit-btn {
+      padding: 10px 22px;
+      background: var(--brown-warm);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    #edit-btn:hover { background: var(--brown-light); color: var(--black); }
+    #edit-btn:disabled { background: #2a1f1a; color: var(--text-muted); cursor: not-allowed; }
+
+    /* ── RIGHT PANEL ── */
+    #output-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      background: #0d0d0d;
+    }
+
+    #output-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .output-actions { display: flex; gap: 10px; align-items: center; }
+
+    .action-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid #2a2a2a;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    #view-toggle {
+      display: flex;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .view-tab {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .view-tab + .view-tab { border-left: 1px solid #2a2a2a; }
+    .view-tab.active { background: var(--brown-mid); color: var(--white); }
+    .view-tab:hover:not(.active) { color: var(--white); }
+
+    #diff-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.9;
+      color: #d0c5bc;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    #diff-view::-webkit-scrollbar { width: 4px; }
+    #diff-view::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    #clean-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.9;
+      color: #d0c5bc;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    #clean-view::-webkit-scrollbar { width: 4px; }
+    #clean-view::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    #clean-view p, #diff-view p { margin-bottom: 14px; }
+    #clean-view strong, #diff-view strong { color: var(--white); font-weight: 600; }
+    #clean-view ul, #clean-view ol, #diff-view ul, #diff-view ol { margin-bottom: 14px; padding-left: 20px; }
+    #clean-view li, #diff-view li { margin-bottom: 6px; line-height: 1.7; }
+
+    #diff-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .placeholder-icon { font-size: 36px; opacity: 0.3; }
+
+    #diff-placeholder p {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Stats bar */
+    #stats-bar {
+      padding: 10px 20px;
+      border-top: 1px solid #1c1c1c;
+      background: #111;
+      display: flex;
+      gap: 24px;
+      flex-shrink: 0;
+      display: none;
+    }
+
+    .stat { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .stat-num { font-weight: 600; font-size: 13px; }
+    .stat-num.replaced { color: #fbbf24; }
+    .stat-num.added    { color: #22c55e; }
+    .stat-num.removed  { color: #ef4444; }
+    .stat-num.score    { color: var(--brown-light); }
+
+    /* Diff markup */
+    .diff-strikethrough { text-decoration: line-through; color: #ef4444; opacity: 0.7; }
+    .diff-replaced { background: rgba(251,191,36,0.15); color: #fde68a; padding: 0 2px; border-radius: 2px; }
+    .diff-added    { background: rgba(34,197,94,0.15);  color: #86efac; padding: 0 2px; border-radius: 2px; }
+    .diff-removed  { background: rgba(239,68,68,0.15);  color: #fca5a5; padding: 0 2px; border-radius: 2px; text-decoration: line-through; }
+
+    /* Thinking row */
+    .thinking-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #2a1f1a;
+      border-top-color: var(--brown-light);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Communications</div>
+    </div>
+    <div id="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(251,191,36,0.6);"></div>Replaced
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(34,197,94,0.6);"></div>Added
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(239,68,68,0.6);"></div>Removed
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div id="workspace">
+
+    <!-- LEFT: INPUT -->
+    <div id="input-panel">
+
+      <!-- COMM TYPE SELECTOR -->
+      <div id="comm-type-bar">
+        <span id="comm-type-label">Communication Type</span>
+        <select id="comm-type-select" onchange="onCommTypeChange()">
+          <option value="">— Select a type —</option>
+          <option value="email">Email</option>
+          <option value="press-release">Press Release</option>
+          <option value="internal-memo">Internal Memo</option>
+          <option value="social-media">Social Media Post</option>
+          <option value="newsletter">Newsletter</option>
+          <option value="executive-brief">Executive Brief</option>
+        </select>
+      </div>
+
+      <!-- INSTRUCTIONS BANNER -->
+      <div id="instructions-bar">
+        <div id="instructions-title"></div>
+        <div id="instructions-text"></div>
+      </div>
+
+      <!-- PANEL HEADER -->
+      <div class="panel-header">
+        <span class="panel-label">Your Content</span>
+        <span id="word-count">0 words</span>
+      </div>
+
+      <!-- FILE UPLOAD -->
+      <div id="upload-zone">
+        <div class="upload-icon">↑</div>
+        <div>
+          <div class="upload-text">Drop a file or <span onclick="document.getElementById('file-input').click()">browse</span></div>
+          <div class="upload-types">.TXT · .MD · .DOCX · .PDF</div>
+        </div>
+        <input type="file" id="file-input" accept=".txt,.md,.pdf,.docx">
+      </div>
+
+      <div id="upload-loading">
+        <div class="upload-spinner"></div>
+        Reading file...
+      </div>
+
+      <div id="file-indicator">
+        <div id="file-name">
+          <span class="file-icon">📄</span>
+          <span id="file-name-text"></span>
+        </div>
+        <button id="remove-file" onclick="removeFile()">×</button>
+      </div>
+
+      <!-- TEXT AREA -->
+      <textarea id="user-text" placeholder="Paste or type your communication content here..."></textarea>
+
+      <!-- CONTROLS -->
+      <div id="controls">
+        <select id="style-select">
+          <option value="professional">Professional</option>
+          <option value="editorial">Editorial</option>
+          <option value="concise">Concise</option>
+          <option value="persuasive">Persuasive</option>
+          <option value="conversational">Conversational</option>
+        </select>
+        <button id="edit-btn" onclick="runEdit()">Edit →</button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: OUTPUT -->
+    <div id="output-panel">
+      <div id="output-header">
+        <span class="panel-label">Edited Output</span>
+        <div class="output-actions">
+          <div id="view-toggle">
+            <button class="view-tab active" onclick="setViewTab('diff')">Tracked</button>
+            <button class="view-tab" onclick="setViewTab('clean')">Clean</button>
+          </div>
+          <button class="action-btn" onclick="copyClean()">Copy Clean</button>
+          <button class="action-btn" onclick="clearAll()">Clear</button>
+        </div>
+      </div>
+
+      <div id="diff-placeholder">
+        <div class="placeholder-icon">✦</div>
+        <p>Edited output will appear here</p>
+      </div>
+
+      <div id="diff-view" style="display:none;"></div>
+      <div id="clean-view" style="display:none;"></div>
+
+      <div id="stats-bar">
+        <div class="stat">Replaced <span class="stat-num replaced" id="stat-replaced">0</span></div>
+        <div class="stat">Added <span class="stat-num added" id="stat-added">0</span></div>
+        <div class="stat">Removed <span class="stat-num removed" id="stat-removed">0</span></div>
+        <div class="stat" style="margin-left:auto;">Clarity <span class="stat-num score" id="stat-score">—</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+    let cleanEditedText = "";
+    let currentViewTab = "diff";
+
+    // ── COMM TYPE INSTRUCTIONS ──
+    const COMM_INSTRUCTIONS = {
+      "email": {
+        title: "Email",
+        text: "Lead with the most important information. State any required action and deadline in the first paragraph. Keep subject lines specific and front-loaded. Use active voice and avoid lengthy openers."
+      },
+      "press-release": {
+        title: "Press Release",
+        text: "Lead with the action — who did what. Keep the headline under 12 words and front-load the most newsworthy detail. Use the inverted pyramid: most important information first. Write in third person."
+      },
+      "internal-memo": {
+        title: "Internal Memo",
+        text: "State the purpose in the first sentence. Use clear headers for long memos. Be direct — skip pleasantries. Include any required actions and deadlines explicitly. Write for an informed internal audience."
+      },
+      "social-media": {
+        title: "Social Media Post",
+        text: "Keep it punchy — lead with a hook. Use plain language and one clear message per post. Avoid jargon. Call to action should be specific. Character count matters — aim for brevity."
+      },
+      "newsletter": {
+        title: "Newsletter",
+        text: "Open with the most valuable item for the reader. Use short sections with clear headers. Mix short and long content. Write in a warm but professional tone. Every section should earn its place."
+      },
+      "executive-brief": {
+        title: "Executive Brief",
+        text: "Bottom line up front — lead with the recommendation or key finding. Executives read for decisions, not detail. Use concise bullets for supporting points. Avoid jargon. Keep to one page if possible."
+      }
+    };
+
+    // ── COMM TYPE CHANGE ──
+    function onCommTypeChange() {
+      const type = document.getElementById('comm-type-select').value;
+      const bar = document.getElementById('instructions-bar');
+
+      if (!type) {
+        bar.classList.remove('visible');
+        document.getElementById('user-text').placeholder = 'Paste or type your communication content here...';
+        return;
+      }
+
+      const info = COMM_INSTRUCTIONS[type];
+      document.getElementById('instructions-title').textContent = info.title + ' Guidelines';
+      document.getElementById('instructions-text').textContent = info.text;
+      bar.classList.add('visible');
+      document.getElementById('user-text').placeholder = `Paste or type your ${info.title.toLowerCase()} content here...`;
+    }
+
+    // ── VIEW TOGGLE ──
+    function setViewTab(tab) {
+      currentViewTab = tab;
+      document.querySelectorAll('.view-tab').forEach(t =>
+        t.classList.toggle('active', t.textContent.toLowerCase() === tab)
+      );
+      const hasDiff = document.getElementById('diff-view').innerHTML !== '';
+      if (!hasDiff) return;
+      document.getElementById('diff-view').style.display  = tab === 'diff'  ? 'block' : 'none';
+      document.getElementById('clean-view').style.display = tab === 'clean' ? 'block' : 'none';
+    }
+
+    // ── FORMAT TEXT ──
+    function formatText(text) {
+      function inlineFormat(str) {
+        return str
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+      }
+      const lines = text.split('\n');
+      const output = [];
+      let inUl = false, inOl = false;
+
+      function closeLists() {
+        if (inUl) { output.push('</ul>'); inUl = false; }
+        if (inOl) { output.push('</ol>'); inOl = false; }
+      }
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) { closeLists(); return; }
+
+        const olMatch = trimmed.match(/^(\d+)[.)]\s+(.+)/);
+        if (olMatch) {
+          if (inUl) { output.push('</ul>'); inUl = false; }
+          if (!inOl) { output.push('<ol>'); inOl = true; }
+          output.push(`<li>${inlineFormat(olMatch[2])}</li>`);
+          return;
+        }
+
+        const ulMatch = trimmed.match(/^[-*•]\s+(.+)/);
+        if (ulMatch) {
+          if (inOl) { output.push('</ol>'); inOl = false; }
+          if (!inUl) { output.push('<ul style="padding-left:20px;margin-bottom:12px;">'); inUl = true; }
+          output.push(`<li>${inlineFormat(ulMatch[1])}</li>`);
+          return;
+        }
+
+        closeLists();
+        output.push(`<p>${inlineFormat(trimmed)}</p>`);
+      });
+
+      closeLists();
+      return output.join('');
+    }
+
+    // ── DIFF ENGINE ──
+    function computeDiff(original, edited) {
+      const origParas = original.split(/\n+/);
+      const editParas = edited.split(/\n+/);
+      const maxParas  = Math.max(origParas.length, editParas.length);
+
+      let totalReplaced = 0, totalAdded = 0, totalRemoved = 0;
+      const paraHtmls = [];
+
+      for (let p = 0; p < maxParas; p++) {
+        const origText = origParas[p] || '';
+        const editText = editParas[p] || '';
+        if (!origText && !editText) continue;
+
+        if (!origText) {
+          paraHtmls.push(`<p><span class="diff-added">${escapeHtml(editText)}</span></p>`);
+          totalAdded++;
+          continue;
+        }
+        if (!editText) {
+          paraHtmls.push(`<p><span class="diff-removed">${escapeHtml(origText)}</span></p>`);
+          totalRemoved++;
+          continue;
+        }
+
+        const origWords = origText.trim().split(/\s+/).filter(w => w.length > 0);
+        const editWords = editText.trim().split(/\s+/).filter(w => w.length > 0);
+        const lcs = buildLCS(origWords, editWords);
+        const result = [];
+        let i = 0, j = 0, lcsIdx = 0;
+
+        while (i < origWords.length || j < editWords.length) {
+          const origWord = origWords[i];
+          const editWord = editWords[j];
+          const lcsWord  = lcs[lcsIdx];
+
+          if (i < origWords.length && j < editWords.length &&
+              origWord === lcsWord && editWord === lcsWord) {
+            result.push(escapeHtml(editWord));
+            i++; j++; lcsIdx++;
+          } else if (j < editWords.length && editWord === lcsWord &&
+                     (i >= origWords.length || origWord !== lcsWord)) {
+            result.push(`<span class="diff-added">${escapeHtml(editWord)}</span>`);
+            totalAdded++;
+            j++;
+          } else if (i < origWords.length && origWord !== lcsWord) {
+            if (j < editWords.length && editWords[j] !== lcs[lcsIdx]) {
+              result.push(`<span class="diff-strikethrough">${escapeHtml(origWord)}</span><span class="diff-replaced">${escapeHtml(editWords[j])}</span>`);
+              totalReplaced++;
+              i++; j++;
+            } else {
+              result.push(`<span class="diff-removed">${escapeHtml(origWord)}</span>`);
+              totalRemoved++;
+              i++;
+            }
+          } else {
+            if (i < origWords.length) i++;
+            if (j < editWords.length) j++;
+          }
+        }
+
+        paraHtmls.push(`<p>${result.join(' ')}</p>`);
+      }
+
+      return { html: paraHtmls.join(''), replacedCount: totalReplaced, addedCount: totalAdded, removedCount: totalRemoved };
+    }
+
+    function buildLCS(a, b) {
+      const m = a.length, n = b.length;
+      const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+      for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+          dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+      const lcs = [];
+      let i = m, j = n;
+      while (i > 0 && j > 0) {
+        if (a[i-1] === b[j-1]) { lcs.unshift(a[i-1]); i--; j--; }
+        else if (dp[i-1][j] > dp[i][j-1]) i--;
+        else j--;
+      }
+      return lcs;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function computeClarityScore(original, edited, replaced, added, removed) {
+      const origWords = original.trim().split(/\s+/).length;
+      const editWords = edited.trim().split(/\s+/).length;
+      const changeRatio = (replaced + added + removed) / Math.max(origWords, 1);
+      const lengthPenalty = editWords > origWords * 1.2 ? 5 : 0;
+      const score = Math.max(0, Math.min(100, Math.round(100 - (changeRatio * 40) - lengthPenalty)));
+      return score;
+    }
+
+    // ── MOCK EDIT with comm-type awareness ──
+    function mockEdit(text, style, commType) {
+      let edited = text;
+
+      // Style transforms (same as chat.html)
+      if (style === 'concise') {
+        edited = edited.replace(/\bdue to the fact that\b/g, 'because');
+        edited = edited.replace(/\bat this point in time\b/g, 'now');
+        edited = edited.replace(/\bvery unique\b/g, 'unique');
+        edited = edited.replace(/\bbasically\b/g, '');
+        edited = edited.replace(/\bactually\b/g, '');
+      }
+      if (style === 'professional') {
+        edited = edited.replace(/\bkinda\b/g, 'somewhat');
+        edited = edited.replace(/\bkind of\b/g, 'somewhat');
+        edited = edited.replace(/\bwanna\b/g, 'want to');
+        edited = edited.replace(/\bgonna\b/g, 'going to');
+        edited = edited.replace(/\bgotta\b/g, 'need to');
+        edited = edited.replace(/\bcan't\b/g, 'cannot');
+        edited = edited.replace(/\bdon't\b/g, 'do not');
+        edited = edited.replace(/\bwon't\b/g, 'will not');
+      }
+      if (style === 'conversational') {
+        edited = edited.replace(/\bcannot\b/g, "can't");
+        edited = edited.replace(/\bdo not\b/g, "don't");
+        edited = edited.replace(/\bwill not\b/g, "won't");
+        edited = edited.replace(/\butilize\b/g, 'use');
+        edited = edited.replace(/\bpurchase\b/g, 'buy');
+      }
+      if (style === 'persuasive') {
+        edited = edited.replace(/\byou can\b/g, 'you will');
+        edited = edited.replace(/\bmight\b/g, 'will');
+        edited = edited.replace(/\bcould\b/g, 'can');
+      }
+
+      // Comm-type specific transforms
+      if (commType === 'email') {
+        edited = edited.replace(/^(Hi|Hello|Hey|Dear).*?\n/i, '');
+        edited = edited.replace(/\bHope you.*?this.*?\.\s*/gi, '');
+        edited = edited.replace(/\bI wanted to reach out\b/gi, 'I am writing');
+        edited = edited.replace(/\bplease don't hesitate\b/gi, 'please feel free');
+      }
+      if (commType === 'press-release') {
+        edited = edited.replace(/\bwe are excited to announce\b/gi, 'announced today');
+        edited = edited.replace(/\bwe are pleased to\b/gi, '');
+        edited = edited.replace(/\bour company\b/gi, 'the company');
+      }
+      if (commType === 'social-media') {
+        edited = edited.replace(/\bIn order to\b/gi, 'To');
+        edited = edited.replace(/\butilize\b/gi, 'use');
+        edited = edited.replace(/\bcommence\b/gi, 'start');
+      }
+      if (commType === 'executive-brief') {
+        edited = edited.replace(/\bIt is important to note that\b/gi, 'Note:');
+        edited = edited.replace(/\bIn conclusion\b/gi, 'Bottom line:');
+        edited = edited.replace(/\bdue to the fact that\b/gi, 'because');
+      }
+
+      return edited.replace(/\s{2,}/g, ' ').trim();
+    }
+
+    // ── RUN EDIT ──
+    async function runEdit() {
+      const text = document.getElementById('user-text').value.trim();
+      if (!text) return;
+
+      const commType = document.getElementById('comm-type-select').value;
+      const style    = document.getElementById('style-select').value;
+      const btn      = document.getElementById('edit-btn');
+
+      btn.disabled = true;
+      btn.textContent = 'Editing...';
+      document.getElementById('diff-placeholder').style.display = 'none';
+      document.getElementById('clean-view').style.display = 'none';
+      document.getElementById('diff-view').style.display = 'flex';
+      document.getElementById('stats-bar').style.display = 'none';
+      document.getElementById('diff-view').innerHTML = `
+        <div class="thinking-row">
+          <div class="spinner"></div>
+          Refining your ${commType ? COMM_INSTRUCTIONS[commType]?.title.toLowerCase() || 'content' : 'content'}...
+        </div>`;
+
+      await new Promise(r => setTimeout(r, 800));
+
+      try {
+        let editedText;
+        try {
+          const systemPrompt = commType
+            ? `You are editing a ${COMM_INSTRUCTIONS[commType]?.title}. ${COMM_INSTRUCTIONS[commType]?.text} Edit the following in a ${style} style. Return ONLY the edited text with no commentary:`
+            : `Edit the following text in a ${style} style. Return ONLY the edited text with no commentary:`;
+
+          const res = await fetch(`${API}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `${systemPrompt}\n\n${text}`, config: 'blog-articles' })
+          });
+          const data = await res.json();
+          editedText = data.reply;
+          if (editedText.startsWith('[Mock response')) editedText = mockEdit(text, style, commType);
+        } catch {
+          editedText = mockEdit(text, style, commType);
+        }
+
+        cleanEditedText = editedText;
+
+        const { html, replacedCount, addedCount, removedCount } = computeDiff(text, editedText);
+        const score = computeClarityScore(text, editedText, replacedCount, addedCount, removedCount);
+
+        document.getElementById('diff-view').innerHTML = html;
+        document.getElementById('clean-view').innerHTML = formatText(editedText);
+
+        document.getElementById('diff-view').style.display  = currentViewTab === 'diff'  ? 'block' : 'none';
+        document.getElementById('clean-view').style.display = currentViewTab === 'clean' ? 'block' : 'none';
+
+        document.getElementById('stat-replaced').textContent = replacedCount;
+        document.getElementById('stat-added').textContent    = addedCount;
+        document.getElementById('stat-removed').textContent  = removedCount;
+        document.getElementById('stat-score').textContent    = `${score}/100`;
+        document.getElementById('stats-bar').style.display   = 'flex';
+
+      } catch (err) {
+        document.getElementById('diff-view').innerHTML = `<p style="color:var(--text-muted);font-style:italic;">Something went wrong. Please try again.</p>`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Edit →';
+    }
+
+    // ── FILE UPLOAD ── (same as chat.html)
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput  = document.getElementById('file-input');
+
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+    uploadZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+    async function handleFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['txt','md','pdf','docx'].includes(ext)) {
+        alert('Unsupported file type. Please upload a .txt, .md, .pdf, or .docx file.');
+        return;
+      }
+      document.getElementById('upload-loading').classList.add('visible');
+      document.getElementById('file-indicator').classList.remove('visible');
+      try {
+        let text = '';
+        if (ext === 'txt' || ext === 'md') {
+          text = await file.text();
+        } else if (ext === 'docx') {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          text = result.value;
+        } else if (ext === 'pdf') {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const pages = [];
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            pages.push(content.items.map(item => item.str).join(' '));
+          }
+          text = pages.join('\n\n');
+        }
+        document.getElementById('user-text').value = text.trim();
+        document.getElementById('user-text').dispatchEvent(new Event('input'));
+        document.getElementById('file-name-text').textContent = file.name;
+        document.getElementById('file-indicator').classList.add('visible');
+      } catch (err) {
+        alert('Could not read the file. Please try again or paste your text directly.');
+      }
+      document.getElementById('upload-loading').classList.remove('visible');
+      fileInput.value = '';
+    }
+
+    function removeFile() {
+      document.getElementById('user-text').value = '';
+      document.getElementById('file-indicator').classList.remove('visible');
+      document.getElementById('word-count').textContent = '0 words';
+      cleanEditedText = '';
+    }
+
+    document.getElementById('user-text').addEventListener('input', function() {
+      const words = this.value.trim().split(/\s+/).filter(w => w).length;
+      document.getElementById('word-count').textContent = `${words} word${words !== 1 ? 's' : ''}`;
+    });
+
+    function copyClean() {
+      if (!cleanEditedText) return;
+      navigator.clipboard.writeText(cleanEditedText).then(() => {
+        const btn = document.querySelector('.action-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Clean', 1500);
+      });
+    }
+
+    function clearAll() {
+      document.getElementById('user-text').value = '';
+      document.getElementById('diff-view').style.display = 'none';
+      document.getElementById('diff-view').innerHTML = '';
+      document.getElementById('clean-view').style.display = 'none';
+      document.getElementById('clean-view').innerHTML = '';
+      document.getElementById('diff-placeholder').style.display = 'flex';
+      document.getElementById('stats-bar').style.display = 'none';
+      document.getElementById('word-count').textContent = '0 words';
+      document.getElementById('file-indicator').classList.remove('visible');
+      cleanEditedText = '';
+    }
+  </script>
+
+</body>
+</html>
