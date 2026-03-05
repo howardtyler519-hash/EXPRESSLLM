@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Build</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left { display: flex; align-items: center; gap: 20px; }
+
+    #back-btn {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--brown-light); text-decoration: none; transition: color 0.2s;
+    }
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title { font-family: 'Playfair Display', serif; font-size: 18px; letter-spacing: 4px; color: var(--white); }
+
+    .topbar-badge {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--brown-light); background: var(--brown-mid);
+      padding: 3px 10px; border-radius: 20px; border: 1px solid var(--brown-warm);
+    }
+
+    #mode-toggle { display: flex; gap: 4px; background: #111; padding: 4px; border-radius: 6px; border: 1px solid #1c1c1c; }
+
+    .mode-btn {
+      padding: 6px 14px; background: transparent; color: var(--text-muted);
+      border: none; border-radius: 4px; font-size: 12px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    .mode-btn.active { background: var(--brown-mid); color: var(--white); }
+    .mode-btn:hover:not(.active) { color: var(--white); }
+
+    #workspace { display: flex; flex: 1; overflow: hidden; }
+
+    #chat-panel {
+      width: 42%; flex-shrink: 0; display: flex; flex-direction: column;
+      border-right: 1px solid #1c1c1c; background: #050505; overflow: hidden;
+    }
+
+    #chat-window {
+      display: flex; flex-direction: column; flex: 1;
+      overflow-y: auto; padding: 20px; gap: 12px;
+    }
+    #chat-window::-webkit-scrollbar { width: 4px; }
+    #chat-window::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .message { padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.6; max-width: 85%; }
+    .message.assistant { background: #111; border: 1px solid #1c1c1c; color: #c0b5ac; align-self: flex-start; }
+    .message.user { background: var(--brown-mid); border: 1px solid var(--brown-warm); color: var(--white); align-self: flex-end; }
+
+    #input-area { display: flex; gap: 10px; padding: 16px; border-top: 1px solid #1c1c1c; flex-shrink: 0; }
+
+    #user-input {
+      flex: 1; background: #111; color: var(--white);
+      border: 1px solid #2a1f1a; border-radius: 6px;
+      padding: 9px 12px; font-family: 'Open Sans', sans-serif;
+      font-size: 13px; resize: none; outline: none;
+    }
+    #user-input:focus { border-color: var(--brown-light); }
+
+    #send-btn {
+      padding: 9px 18px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: background 0.2s;
+    }
+    #send-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    #paste-area { display: none; flex-direction: column; gap: 12px; padding: 20px; flex: 1; }
+    #paste-area label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+
+    #html-input {
+      flex: 1; background: #111; color: #c0b5ac;
+      border: 1px solid #2a1f1a; border-radius: 6px; padding: 14px;
+      font-family: monospace; font-size: 12px; resize: none; outline: none;
+    }
+
+    #preview-html-btn {
+      padding: 10px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: background 0.2s;
+    }
+    #preview-html-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    /* ── BUILDER ── */
+    #builder-area { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding: 20px; gap: 0; }
+    #builder-area.visible { display: flex; }
+    #builder-area::-webkit-scrollbar { width: 4px; }
+    #builder-area::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .builder-step { display: flex; flex-direction: column; gap: 14px; }
+    .builder-step.hidden { display: none; }
+
+    .step-header { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #1c1c1c; margin-bottom: 4px; }
+
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--brown-mid); border: 1px solid var(--brown-warm);
+      color: var(--brown-light); font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-weight: 600;
+    }
+    .step-num.done { background: #1a3a1a; border-color: #2a5a2a; color: #22c55e; }
+    .step-title { font-size: 13px; font-weight: 600; color: var(--white); }
+    .step-sub { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+    #builder-content-input {
+      width: 100%; height: 160px; background: #111; color: #c0b5ac;
+      border: 1px solid #2a1f1a; border-radius: 6px; padding: 12px 14px;
+      font-family: 'Open Sans', sans-serif; font-size: 13px; resize: none; outline: none; line-height: 1.7;
+    }
+    #builder-content-input:focus { border-color: var(--brown-light); }
+    #builder-content-input::placeholder { color: #3a2a20; }
+
+    .scope-options, .type-options { display: flex; flex-direction: column; gap: 8px; }
+
+    .scope-btn, .type-option {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 14px; background: #111; border: 1px solid #1c1c1c;
+      border-radius: 6px; cursor: pointer; text-align: left;
+      font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    .scope-btn:hover, .type-option:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .scope-btn.selected, .type-option.selected { border-color: var(--brown-light); background: #1a1208; }
+
+    .scope-icon, .type-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .scope-name, .type-name { font-size: 13px; font-weight: 600; color: var(--white); display: block; margin-bottom: 2px; }
+    .scope-desc, .type-desc { font-size: 11px; color: var(--text-muted); display: block; line-height: 1.4; }
+
+    /* ── COMPONENT CHIPS ── */
+    #assembled-components { display: flex; flex-direction: column; gap: 8px; }
+
+    .component-block {
+      border: 1px solid var(--brown-warm); border-radius: 6px;
+      background: #1a1208; overflow: hidden;
+      animation: chipIn 0.2s ease;
+    }
+
+    @keyframes chipIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+
+    .component-chip { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; }
+    .chip-left { display: flex; align-items: center; gap: 10px; }
+    .chip-icon { font-size: 15px; }
+    .chip-name { font-size: 13px; color: var(--white); font-weight: 500; }
+    .chip-right { display: flex; align-items: center; gap: 8px; }
+
+    .chip-customize-btn {
+      font-size: 11px; color: var(--brown-light); background: none;
+      border: 1px solid #3d2b1f; border-radius: 4px; padding: 3px 8px;
+      cursor: pointer; font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .chip-customize-btn:hover { border-color: var(--brown-light); color: var(--white); }
+    .chip-customize-btn .arrow { font-size: 9px; transition: transform 0.2s; display: inline-block; }
+    .chip-customize-btn.open .arrow { transform: rotate(90deg); }
+
+    .chip-remove {
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 18px; line-height: 1; transition: color 0.2s;
+    }
+    .chip-remove:hover { color: #ef4444; }
+
+    /* ── ADD-ON PANEL ── */
+    .addon-panel {
+      display: none; flex-direction: column; gap: 6px;
+      padding: 10px 14px 12px; border-top: 1px solid #2a1f1a; background: #0f0a06;
+    }
+    .addon-panel.open { display: flex; }
+
+    .addon-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+
+    .addon-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #1a1208; }
+    .addon-row:last-child { border-bottom: none; }
+    .addon-row-info { display: flex; flex-direction: column; gap: 2px; }
+    .addon-row-name { font-size: 12px; color: #c0b5ac; }
+    .addon-row-desc { font-size: 10px; color: var(--text-muted); }
+
+    /* Toggle switch */
+    .toggle-switch { position: relative; width: 34px; height: 18px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #2a2a2a;
+      border-radius: 18px; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 12px; height: 12px;
+      left: 3px; top: 3px; background: #555; border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--brown-warm); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); background: var(--white); }
+
+    /* Buttons */
+    .builder-next-btn {
+      padding: 10px 20px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Open Sans', sans-serif; transition: background 0.2s;
+    }
+    .builder-next-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    .builder-back-btn {
+      padding: 8px 16px; background: transparent; color: var(--text-muted);
+      border: 1px solid #2a2a2a; border-radius: 6px; font-size: 12px;
+      cursor: pointer; font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    .builder-back-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+    .builder-actions { display: flex; gap: 10px; align-items: center; }
+
+    #done-summary {
+      background: #111; border: 1px solid #1c1c1c; border-radius: 6px;
+      padding: 14px; font-size: 12px; color: var(--text-muted); line-height: 1.8;
+    }
+    #done-summary strong { color: var(--brown-light); }
+
+    /* ── RIGHT PANEL ── */
+    #preview-panel { flex: 1; display: flex; flex-direction: column; background: #0a0a0a; overflow: hidden; }
+
+    #preview-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; border-bottom: 1px solid #1c1c1c; flex-shrink: 0;
+    }
+
+    #preview-tabs { display: flex; gap: 4px; }
+
+    .preview-tab {
+      padding: 5px 14px; font-size: 12px; color: var(--text-muted);
+      cursor: pointer; border-radius: 4px; transition: all 0.2s; letter-spacing: 1px;
+    }
+    .preview-tab.active { background: var(--brown-mid); color: var(--white); }
+    .preview-tab:hover:not(.active) { color: var(--white); }
+
+    #clear-preview-btn {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 4px; border: 1px solid #2a2a2a;
+      background: transparent; color: var(--text-muted); cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    #clear-preview-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    #preview-content { flex: 1; position: relative; overflow: hidden; }
+
+    #preview-placeholder {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px; color: var(--text-muted);
+    }
+    .placeholder-icon { font-size: 36px; opacity: 0.3; }
+    #preview-placeholder p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+    #preview-frame { width: 100%; height: 100%; border: none; display: none; background: #fff; }
+    #preview-frame.visible { display: block; }
+
+    #code-view { display: none; flex-direction: column; height: 100%; position: relative; }
+    #code-view.visible { display: flex; }
+
+    #copy-code-btn {
+      position: absolute; top: 12px; right: 12px; padding: 6px 14px;
+      background: var(--brown-mid); color: var(--white); border: 1px solid var(--brown-warm);
+      border-radius: 4px; font-size: 11px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: background 0.2s; z-index: 10;
+    }
+    #copy-code-btn:hover { background: var(--brown-warm); }
+
+    #code-output {
+      flex: 1; overflow: auto; padding: 20px; font-family: monospace;
+      font-size: 12px; color: #c0b5ac; white-space: pre-wrap;
+      word-break: break-all; background: #060606;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Build</div>
+    </div>
+    <div id="mode-toggle">
+      <button class="mode-btn active" id="btn-describe" onclick="setMode('describe')">Describe</button>
+      <button class="mode-btn" id="btn-paste"    onclick="setMode('paste')">Paste HTML</button>
+      <button class="mode-btn" id="btn-builder"  onclick="setMode('builder')">Template Builder</button>
+    </div>
+  </div>
+
+  <div id="workspace">
+
+    <div id="chat-panel">
+
+      <!-- DESCRIBE -->
+      <div id="chat-window">
+        <div class="message assistant">Welcome to Build! Describe what you want and I'll generate the HTML, switch to Paste HTML to preview your own code, or use Template Builder to build step by step.</div>
+      </div>
+      <div id="input-area">
+        <textarea id="user-input" placeholder="Describe what you want to build..." rows="2"></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+
+      <!-- PASTE -->
+      <div id="paste-area">
+        <label>Paste your HTML below</label>
+        <textarea id="html-input" placeholder="<html>...</html>"></textarea>
+        <button id="preview-html-btn" onclick="previewPastedHTML()">Preview →</button>
+      </div>
+
+      <!-- BUILDER -->
+      <div id="builder-area">
+
+        <!-- Step 1 -->
+        <div class="builder-step" id="step-content">
+          <div class="step-header"><span class="step-num">1</span><span class="step-title">Paste or type your content</span></div>
+          <p class="step-sub">Add your text, bullets, or notes. It will be distributed into the right components automatically.</p>
+          <textarea id="builder-content-input" placeholder="Paste your article text, bullet points, or notes here..."></textarea>
+          <button class="builder-next-btn" onclick="goToStepScope()">Continue →</button>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="builder-step hidden" id="step-scope">
+          <div class="step-header"><span class="step-num">2</span><span class="step-title">What are you creating?</span></div>
+          <div class="scope-options">
+            <button class="scope-btn" id="scope-article" onclick="selectScope('article')">
+              <span class="scope-icon">📄</span>
+              <div><span class="scope-name">Full Article</span><span class="scope-desc">A complete page with header, body, and footer components</span></div>
+            </button>
+            <button class="scope-btn" id="scope-section" onclick="selectScope('section')">
+              <span class="scope-icon">◧</span>
+              <div><span class="scope-name">Section</span><span class="scope-desc">A single content block to drop into an existing page</span></div>
+            </button>
+          </div>
+          <button class="builder-back-btn" onclick="goToStep('step-content')">← Back</button>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="builder-step hidden" id="step-type">
+          <div class="step-header"><span class="step-num">3</span><span class="step-title">Select your article type</span></div>
+          <div class="type-options">
+            <button class="type-option" onclick="selectType('article')">
+              <span class="type-icon">📝</span>
+              <div><span class="type-name">Article</span><span class="type-desc">Long-form editorial with hero, body, and related links</span></div>
+            </button>
+            <button class="type-option" onclick="selectType('catalog')">
+              <span class="type-icon">📋</span>
+              <div><span class="type-name">Catalog</span><span class="type-desc">Products or listings with grid layout and filters</span></div>
+            </button>
+            <button class="type-option" onclick="selectType('topic-action')">
+              <span class="type-icon">⚡</span>
+              <div><span class="type-name">Topic Action</span><span class="type-desc">Step-by-step instructions with a clear call to action</span></div>
+            </button>
+            <button class="type-option" onclick="selectType('topic-info')">
+              <span class="type-icon">💡</span>
+              <div><span class="type-name">Topic Info</span><span class="type-desc">Informational overview with intro, details, and summary</span></div>
+            </button>
+          </div>
+          <button class="builder-back-btn" onclick="goToStep('step-scope')">← Back</button>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="builder-step hidden" id="step-review">
+          <div class="step-header"><span class="step-num">4</span><span class="step-title">Customize components</span></div>
+          <p class="step-sub">Remove components you don't need, or expand any to toggle optional add-ons. Preview updates instantly.</p>
+          <div id="assembled-components"></div>
+          <div class="builder-actions">
+            <button class="builder-next-btn" onclick="buildPreview()">Build Preview →</button>
+            <button class="builder-back-btn" onclick="goToStep('step-type')">← Back</button>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="builder-step hidden" id="step-done">
+          <div class="step-header"><span class="step-num done">✓</span><span class="step-title">Layout built</span></div>
+          <p class="step-sub">Your content has been placed into the template. View the preview or grab the HTML.</p>
+          <div id="done-summary"></div>
+          <div class="builder-actions" style="margin-top:8px;">
+            <button class="builder-next-btn" onclick="resetBuilder()">Start Over</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div id="preview-panel">
+      <div id="preview-topbar">
+        <div id="preview-tabs">
+          <div class="preview-tab active" onclick="setPreviewTab('preview')">Preview</div>
+          <div class="preview-tab" onclick="setPreviewTab('code')">HTML Code</div>
+        </div>
+        <button id="clear-preview-btn" onclick="clearPreview()">Clear</button>
+      </div>
+      <div id="preview-content">
+        <div id="preview-placeholder">
+          <div class="placeholder-icon">⬡</div>
+          <p>Preview will appear here</p>
+        </div>
+        <iframe id="preview-frame"></iframe>
+        <div id="code-view">
+          <button id="copy-code-btn" onclick="copyCode()">Copy Code</button>
+          <pre id="code-output"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+    let currentMode = "describe", currentPreviewTab = "preview";
+    let selectedType = null, selectedScope = null, userContent = "";
+    let assembledBlocks = []; // { comp, addonState }
+
+    // ════════════════════════════
+    // COMPONENT LIBRARY
+    // Each comp: { name, icon, addons[], html(content, addonState) }
+    // ════════════════════════════
+    const TYPE_COMPONENTS = {
+      article: [
+        {
+          name: "Hero Banner", icon: "🖼",
+          addons: [
+            { key:"eyebrow",  label:"Eyebrow Label",  desc:"Small category tag above the title", default:true  },
+            { key:"subtitle", label:"Subtitle",        desc:"Supporting line below the title",    default:true  },
+            { key:"date",     label:"Date & Author",   desc:"Byline below the subtitle",          default:false },
+            { key:"badge",    label:"Status Badge",    desc:"e.g. New, Updated, Featured",       default:false },
+          ],
+          html:(c,a)=>`<div style="background:#1a1a2e;color:#fff;padding:48px 32px;border-radius:4px;margin-bottom:24px;position:relative;">
+${a.badge?`<span style="position:absolute;top:20px;right:20px;background:#4a6fa5;color:#fff;font-size:11px;letter-spacing:2px;padding:4px 10px;border-radius:20px;text-transform:uppercase;">Featured</span>`:''}
+${a.eyebrow?`<p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#a0b0c8;margin-bottom:12px;">Article</p>`:''}
+<h1 style="font-size:36px;font-weight:700;margin-bottom:16px;line-height:1.2;">${getFirstLine(c)||'Article Title'}</h1>
+${a.subtitle?`<p style="font-size:15px;color:#b0bec5;line-height:1.7;">${getSecondLine(c)||'A compelling introduction to the article.'}</p>`:''}
+${a.date?`<p style="font-size:12px;color:#7a8fa8;margin-top:16px;">By <strong>[ Author ]</strong> &nbsp;·&nbsp; ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p>`:''}
+</div>`
+        },
+        {
+          name: "Article Body", icon: "📝",
+          addons: [
+            { key:"dropcap",   label:"Drop Cap",   desc:"Large decorative first letter",  default:false },
+            { key:"pullquote", label:"Pull Quote", desc:"Highlighted quote mid-article",  default:false },
+          ],
+          html:(c,a)=>{
+            const body=formatBodyContent(c), fl=getFirstLine(c)||'Your article body content.';
+            return `<div style="padding:0 8px;margin-bottom:24px;">
+${a.dropcap?`<p style="font-size:15px;line-height:1.9;color:#333;"><span style="float:left;font-size:64px;line-height:0.75;padding-right:8px;padding-top:10px;font-family:Georgia,serif;color:#1a1a2e;font-weight:700;">${(fl[0]||'A')}</span>${escHtml(fl.slice(1))}</p>`:
+`<div style="font-size:15px;line-height:1.9;color:#333;">${body}</div>`}
+${a.pullquote?`<blockquote style="border-left:4px solid #4a6fa5;padding:16px 24px;margin:24px 0;background:#f8f9fb;border-radius:0 4px 4px 0;"><p style="font-size:18px;font-style:italic;color:#2c3e50;line-height:1.6;">"${fl}"</p></blockquote>`:''}
+</div>`;
+          }
+        },
+        {
+          name: "Related Articles", icon: "🔗",
+          addons: [
+            { key:"icons",  label:"Arrow Icons", desc:"Show → icon before each link",    default:true },
+            { key:"border", label:"Top Border",  desc:"Divider line above this section", default:true },
+          ],
+          html:(c,a)=>`<div style="margin-top:32px;${a.border?'padding-top:24px;border-top:1px solid #e0e0e0;':''}">
+<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:16px;">Related Articles</p>
+<div style="display:flex;flex-direction:column;gap:10px;">
+<a href="#" style="color:#4a6fa5;font-size:14px;text-decoration:none;">${a.icons?'→ ':''}How to write effective headlines</a>
+<a href="#" style="color:#4a6fa5;font-size:14px;text-decoration:none;">${a.icons?'→ ':''}Brand voice guidelines</a>
+<a href="#" style="color:#4a6fa5;font-size:14px;text-decoration:none;">${a.icons?'→ ':''}Content approval process</a>
+</div></div>`
+        },
+      ],
+      catalog: [
+        {
+          name: "Catalog Header", icon: "📋",
+          addons: [
+            { key:"subtitle",  label:"Subtitle",    desc:"Descriptive line below the title", default:true  },
+            { key:"itemcount", label:"Item Count",  desc:"e.g. '24 items' label",            default:false },
+          ],
+          html:(c,a)=>`<div style="padding:32px 24px 24px;border-bottom:2px solid #e0e0e0;margin-bottom:24px;">
+<h1 style="font-size:28px;font-weight:700;color:#1a1a2e;margin-bottom:8px;">${getFirstLine(c)||'Catalog Title'}</h1>
+${a.subtitle?`<p style="font-size:14px;color:#666;">${getSecondLine(c)||'Browse the items below.'}</p>`:''}
+${a.itemcount?`<p style="font-size:12px;color:#4a6fa5;margin-top:8px;">24 items</p>`:''}
+</div>`
+        },
+        {
+          name: "Filter Bar", icon: "⚙",
+          addons: [
+            { key:"search", label:"Search Input",   desc:"Text field to filter items",  default:false },
+            { key:"sortby", label:"Sort Dropdown",  desc:"Sort by Name, Date, etc.",    default:false },
+          ],
+          html:(c,a)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+${a.search?`<input placeholder="Search..." style="padding:7px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;flex:1;min-width:160px;">`:''}
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<button style="padding:7px 16px;border:1px solid #4a6fa5;border-radius:20px;background:#4a6fa5;color:#fff;font-size:12px;cursor:pointer;">All</button>
+<button style="padding:7px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#666;font-size:12px;cursor:pointer;">Category A</button>
+<button style="padding:7px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#666;font-size:12px;cursor:pointer;">Category B</button>
+</div>
+${a.sortby?`<select style="padding:7px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;color:#555;margin-left:auto;"><option>Sort: Name</option><option>Sort: Date</option></select>`:''}
+</div>`
+        },
+        {
+          name: "Item Grid", icon: "⊞",
+          addons: [
+            { key:"price", label:"Price Tag",     desc:"Show price on each card",      default:false },
+            { key:"btn",   label:"Action Button", desc:"Button on each card",          default:true  },
+            { key:"badge", label:"Status Badge",  desc:"'New' badge on card",          default:false },
+          ],
+          html:(c,a)=>{
+            const lines=getContentLines(c).slice(0,3);
+            const items=(lines.length?lines:['Item One','Item Two','Item Three']);
+            const cards=items.map(l=>`<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;background:#fff;position:relative;">
+${a.badge?`<span style="position:absolute;top:8px;left:8px;background:#22c55e;color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;">New</span>`:''}
+<div style="height:80px;background:#f0f4f8;"></div>
+<div style="padding:14px;">
+<p style="font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:4px;">${l}</p>
+${a.price?`<p style="font-size:13px;color:#4a6fa5;margin-bottom:8px;">$99.00</p>`:''}
+${a.btn?`<button style="width:100%;padding:7px;background:#1a1a2e;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">View Details</button>`:''}
+</div></div>`).join('');
+            return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">${cards}</div>`;
+          }
+        },
+      ],
+      'topic-action': [
+        {
+          name: "Action Banner", icon: "⚡",
+          addons: [
+            { key:"eyebrow",  label:"Eyebrow Label", desc:"Small tag above the title",       default:true  },
+            { key:"subtitle", label:"Subtitle",       desc:"Supporting description",          default:true  },
+            { key:"time",     label:"Time Estimate",  desc:"e.g. 'Estimated time: 10 min'",  default:false },
+          ],
+          html:(c,a)=>`<div style="background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;padding:40px 32px;border-radius:4px;margin-bottom:28px;text-align:center;">
+${a.eyebrow?`<p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#7db8e0;margin-bottom:12px;">How To</p>`:''}
+<h1 style="font-size:30px;font-weight:700;margin-bottom:12px;">${getFirstLine(c)||'Task Title'}</h1>
+${a.subtitle?`<p style="font-size:14px;color:#b8d4ea;line-height:1.6;">${getSecondLine(c)||'Follow the steps below.'}</p>`:''}
+${a.time?`<p style="font-size:12px;color:#7db8e0;margin-top:14px;">⏱ Estimated time: 10 minutes</p>`:''}
+</div>`
+        },
+        {
+          name: "Step-by-Step", icon: "📋",
+          addons: [
+            { key:"numbers",  label:"Step Numbers", desc:"Numbered circles beside each step", default:true  },
+            { key:"dividers", label:"Dividers",     desc:"Lines between steps",               default:true  },
+            { key:"tips",     label:"Tip Tag",      desc:"'Tip' callout after first step",    default:false },
+          ],
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const steps=(lines.length?lines:['Log in to the portal','Navigate to the section','Complete and submit']).map((l,i)=>
+              `<div style="display:flex;gap:16px;align-items:flex-start;padding:${a.dividers&&i>0?'14px 0':'8px 0'};${a.dividers&&i>0?'border-top:1px solid #f0f0f0;':''}">
+${a.numbers?`<div style="width:28px;height:28px;border-radius:50%;background:#2d6a9f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${i+1}</div>`:
+`<div style="width:8px;height:8px;border-radius:50%;background:#2d6a9f;flex-shrink:0;margin-top:8px;"></div>`}
+<div><p style="font-size:14px;color:#333;line-height:1.6;">${l}</p>
+${a.tips&&i===0?`<p style="font-size:12px;color:#4a6fa5;margin-top:6px;">💡 Tip: Have your credentials ready before starting.</p>`:''}
+</div></div>`).join('');
+            return `<div style="margin-bottom:24px;">${steps}</div>`;
+          }
+        },
+        {
+          name: "Call to Action", icon: "🎯",
+          addons: [
+            { key:"secondary", label:"Secondary Button", desc:"A second softer action button", default:false },
+            { key:"note",      label:"Helper Note",      desc:"Small text below the button",   default:true  },
+          ],
+          html:(c,a)=>`<div style="background:#f0f7ff;border:1px solid #c0d8f0;border-radius:6px;padding:24px 28px;margin-top:24px;text-align:center;">
+<p style="font-size:16px;font-weight:600;color:#1a3a5c;margin-bottom:12px;">Ready to get started?</p>
+<div style="display:flex;gap:10px;justify-content:center;margin-bottom:${a.note?'12px':'0'};">
+<button style="padding:10px 28px;background:#2d6a9f;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;">Get Started</button>
+${a.secondary?`<button style="padding:10px 28px;background:#fff;color:#2d6a9f;border:1px solid #2d6a9f;border-radius:4px;font-size:14px;cursor:pointer;">Learn More</button>`:''}
+</div>
+${a.note?`<p style="font-size:12px;color:#4a6fa5;">Need help? Contact IT at extension 4401.</p>`:''}
+</div>`
+        },
+        {
+          name: "Warning Callout", icon: "⚠",
+          addons: [
+            { key:"icon",  label:"Warning Icon", desc:"Show ⚠ icon before the text", default:true },
+            { key:"title", label:"Bold Title",   desc:"Add 'Important Note' heading", default:true },
+          ],
+          html:(c,a)=>`<div style="background:#fffbea;border-left:4px solid #f5a623;padding:14px 18px;border-radius:0 4px 4px 0;margin:20px 0;">
+${a.title?`<p style="font-size:13px;font-weight:600;color:#7a5c00;margin-bottom:4px;">${a.icon?'⚠ ':''}Important Note</p>`:''}
+<p style="font-size:13px;color:#7a5c00;line-height:1.6;">${!a.title&&a.icon?'⚠ ':''}Add warnings or prerequisites here before users begin.</p>
+</div>`
+        },
+      ],
+      'topic-info': [
+        {
+          name: "Info Header", icon: "💡",
+          addons: [
+            { key:"eyebrow",  label:"Eyebrow Label", desc:"Small category tag above title", default:true  },
+            { key:"subtitle", label:"Subtitle",       desc:"Intro line below the title",    default:true  },
+            { key:"divider",  label:"Bottom Divider", desc:"Line below the header",         default:true  },
+          ],
+          html:(c,a)=>`<div style="padding:32px 0 24px;${a.divider?'border-bottom:3px solid #e0e0e0;':''}margin-bottom:28px;">
+${a.eyebrow?`<p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#4a6fa5;margin-bottom:10px;">Overview</p>`:''}
+<h1 style="font-size:32px;font-weight:700;color:#1a1a2e;margin-bottom:12px;line-height:1.2;">${getFirstLine(c)||'Topic Title'}</h1>
+${a.subtitle?`<p style="font-size:15px;color:#555;line-height:1.7;max-width:600px;">${getSecondLine(c)||'A clear introduction to the topic.'}</p>`:''}
+</div>`
+        },
+        {
+          name: "Key Details", icon: "📌",
+          addons: [
+            { key:"sectionlabel", label:"Section Label", desc:"Show 'Key Details' heading", default:true  },
+            { key:"icons",        label:"Diamond Icons", desc:"◆ icon before each item",    default:true  },
+            { key:"dividers",     label:"Dividers",      desc:"Lines between items",        default:true  },
+          ],
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const items=(lines.length?lines:['First key detail','Second key detail','Third key detail']).map(l=>
+              `<div style="display:flex;gap:12px;padding:12px 0;${a.dividers?'border-bottom:1px solid #f0f0f0;':''}align-items:flex-start;">
+${a.icons?`<span style="color:#4a6fa5;font-size:16px;flex-shrink:0;">◆</span>`:''}
+<p style="font-size:14px;color:#333;line-height:1.6;">${l}</p>
+</div>`).join('');
+            return `<div style="margin-bottom:28px;">${a.sectionlabel?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:14px;">Key Details</p>`:''}${items}</div>`;
+          }
+        },
+        {
+          name: "Summary Box", icon: "📦",
+          addons: [
+            { key:"label",  label:"Summary Label", desc:"Show 'Summary' heading",      default:true  },
+            { key:"border", label:"Accent Border", desc:"Left colored border on box",  default:false },
+          ],
+          html:(c,a)=>`<div style="background:#f8f9fb;border:1px solid #e0e6f0;${a.border?'border-left:4px solid #4a6fa5;':''}border-radius:6px;padding:24px;margin-top:24px;">
+${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#4a6fa5;margin-bottom:12px;">Summary</p>`:''}
+<p style="font-size:14px;color:#333;line-height:1.8;">${getFirstLine(c)||'A brief summary of key takeaways.'}</p>
+</div>`
+        },
+        {
+          name: "FAQ Section", icon: "❓",
+          addons: [
+            { key:"sectionlabel", label:"Section Label",  desc:"Show 'FAQ' heading above",       default:true },
+            { key:"bordered",     label:"Bordered Cards", desc:"Border around each FAQ item",    default:true },
+          ],
+          html:(c,a)=>{
+            const faqs=[{q:'What is this used for?',a:'Replace with your actual FAQ answer.'},{q:'Who should use this?',a:'Replace with your actual FAQ answer.'}];
+            const items=faqs.map(f=>`<div style="${a.bordered?'border:1px solid #e0e0e0;border-radius:6px;':'border-bottom:1px solid #f0f0f0;'}padding:16px;margin-bottom:8px;">
+<p style="font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:6px;">${f.q}</p>
+<p style="font-size:13px;color:#555;line-height:1.6;">${f.a}</p>
+</div>`).join('');
+            return `<div style="margin-top:28px;">${a.sectionlabel?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:16px;">Frequently Asked Questions</p>`:''}${items}</div>`;
+          }
+        },
+      ],
+      section: [
+        {
+          name: "Text Block", icon: "📝",
+          addons: [
+            { key:"label", label:"Section Label", desc:"Small heading above the text", default:false },
+          ],
+          html:(c,a)=>`<div style="margin-bottom:20px;">
+${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:10px;">Section</p>`:''}
+<div style="font-size:15px;line-height:1.9;color:#333;">${formatBodyContent(c)}</div>
+</div>`
+        },
+        {
+          name: "Callout Box", icon: "💬",
+          addons: [
+            { key:"icon",  label:"Icon",       desc:"💡 icon before the text",           default:true  },
+            { key:"title", label:"Bold Title", desc:"Show a bold title in the callout",  default:false },
+          ],
+          html:(c,a)=>`<div style="background:#f0f7ff;border-left:4px solid #4a6fa5;padding:16px 20px;border-radius:0 6px 6px 0;margin-bottom:20px;">
+${a.title?`<p style="font-size:13px;font-weight:600;color:#1a3a5c;margin-bottom:6px;">Key Information</p>`:''}
+<p style="font-size:14px;color:#2c3e50;line-height:1.7;">${a.icon?'💡 ':''}${getFirstLine(c)||'Key information to highlight.'}</p>
+</div>`
+        },
+        {
+          name: "Bullet List", icon: "•",
+          addons: [
+            { key:"label",  label:"Section Label",  desc:"Small heading above the list",   default:false },
+            { key:"styled", label:"Styled Bullets", desc:"◆ instead of default bullets",   default:false },
+          ],
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const items=(lines.length?lines:['Item one','Item two','Item three']).map(l=>
+              a.styled?`<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:#4a6fa5;flex-shrink:0;">◆</span><span style="font-size:14px;color:#333;line-height:1.6;">${l}</span></div>`:
+              `<li style="font-size:14px;color:#333;margin-bottom:8px;line-height:1.6;">${l}</li>`).join('');
+            return `<div style="margin-bottom:20px;">${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:10px;">Key Points</p>`:''}${a.styled?items:`<ul style="padding-left:20px;">${items}</ul>`}</div>`;
+          }
+        },
+        {
+          name: "Numbered Steps", icon: "1.",
+          addons: [
+            { key:"label",   label:"Section Label",  desc:"Small heading above the steps",   default:false },
+            { key:"circles", label:"Circle Numbers", desc:"Numbers in circles vs plain",     default:true  },
+          ],
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const items=(lines.length?lines:['First step','Second step','Third step']).map((l,i)=>
+              `<div style="display:flex;gap:14px;margin-bottom:12px;align-items:flex-start;">
+${a.circles?`<div style="width:24px;height:24px;border-radius:50%;background:#2d6a9f;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>`:
+`<span style="font-size:14px;font-weight:700;color:#2d6a9f;flex-shrink:0;min-width:20px;">${i+1}.</span>`}
+<p style="font-size:14px;color:#333;line-height:1.6;padding-top:${a.circles?'2px':'0'}">${l}</p>
+</div>`).join('');
+            return `<div style="margin-bottom:20px;">${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:12px;">Steps</p>`:''}${items}</div>`;
+          }
+        },
+        {
+          name: "Image Placeholder", icon: "🖼",
+          addons: [
+            { key:"caption", label:"Caption", desc:"Text below the image",          default:false },
+            { key:"rounded", label:"Rounded", desc:"Rounded corners on the image",  default:true  },
+          ],
+          html:(c,a)=>`<div style="margin-bottom:20px;">
+<div style="background:#f0f0f0;border:2px dashed #ccc;${a.rounded?'border-radius:8px;':''}height:180px;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;">[ Image placeholder ]</div>
+${a.caption?`<p style="font-size:12px;color:#888;text-align:center;margin-top:8px;font-style:italic;">Image caption goes here</p>`:''}
+</div>`
+        },
+      ],
+    };
+
+    // ── HELPERS ──
+    function getFirstLine(c)  { return c.split('\n').map(l=>l.trim()).filter(l=>l)[0]||''; }
+    function getSecondLine(c) { return c.split('\n').map(l=>l.trim()).filter(l=>l)[1]||''; }
+    function getContentLines(c) { return c.split('\n').map(l=>l.replace(/^[-*•\d.)\s]+/,'').trim()).filter(l=>l).map(l=>escHtml(l)); }
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function formatBodyContent(c) {
+      if (!c.trim()) return '<p style="color:#aaa;font-style:italic;">Your content will appear here.</p>';
+      return c.split(/\n+/).filter(p=>p.trim()).map(p=>{
+        const l=p.trim();
+        if (l.match(/^[-*•]\s/)) return `<p style="margin-bottom:8px;">• ${escHtml(l.replace(/^[-*•]\s/,''))}</p>`;
+        if (l.match(/^\d+[.)]\s/)) return `<p style="margin-bottom:8px;">${escHtml(l)}</p>`;
+        return `<p style="margin-bottom:14px;">${escHtml(l)}</p>`;
+      }).join('');
+    }
+
+    // ── STEP NAV ──
+    function goToStep(id) { document.querySelectorAll('.builder-step').forEach(s=>s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function goToStepScope() {
+      userContent = document.getElementById('builder-content-input').value.trim();
+      if (!userContent) { alert('Please add some content before continuing.'); return; }
+      goToStep('step-scope');
+    }
+    function selectScope(scope) {
+      selectedScope = scope;
+      document.querySelectorAll('.scope-btn').forEach(b=>b.classList.remove('selected'));
+      document.getElementById(`scope-${scope}`).classList.add('selected');
+      if (scope==='article') setTimeout(()=>goToStep('step-type'),180);
+      else { assembleComponents('section'); setTimeout(()=>goToStep('step-review'),180); }
+    }
+    function selectType(type) {
+      selectedType = type;
+      document.querySelectorAll('.type-option').forEach(b=>b.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      assembleComponents(type);
+      setTimeout(()=>goToStep('step-review'),180);
+    }
+
+    // ── ASSEMBLE ──
+    function assembleComponents(type) {
+      assembledBlocks = [];
+      const comps = TYPE_COMPONENTS[type]||[];
+      const container = document.getElementById('assembled-components');
+      container.innerHTML = '';
+      comps.forEach((comp,idx)=>{
+        const addonState={};
+        (comp.addons||[]).forEach(a=>{ addonState[a.key]=a.default; });
+        assembledBlocks.push({comp,addonState});
+        container.appendChild(buildChipEl(idx,comp,addonState));
+      });
+    }
+
+    function buildChipEl(idx,comp,addonState) {
+      const block=document.createElement('div');
+      block.className='component-block'; block.id=`block-${idx}`;
+
+      const chip=document.createElement('div');
+      chip.className='component-chip';
+      chip.innerHTML=`
+        <div class="chip-left"><span class="chip-icon">${comp.icon}</span><span class="chip-name">${comp.name}</span></div>
+        <div class="chip-right">
+          ${comp.addons&&comp.addons.length?`<button class="chip-customize-btn" id="cust-btn-${idx}"><span class="arrow">▸</span> Customize</button>`:''}
+          <button class="chip-remove" onclick="removeBlock(${idx})">×</button>
+        </div>`;
+      block.appendChild(chip);
+
+      if (comp.addons&&comp.addons.length) {
+        const panel=document.createElement('div');
+        panel.className='addon-panel'; panel.id=`addon-panel-${idx}`;
+        const lbl=document.createElement('div');
+        lbl.className='addon-label'; lbl.textContent='Optional Add-ons';
+        panel.appendChild(lbl);
+
+        comp.addons.forEach(addon=>{
+          const row=document.createElement('div');
+          row.className='addon-row';
+          row.innerHTML=`
+            <div class="addon-row-info">
+              <span class="addon-row-name">${addon.label}</span>
+              <span class="addon-row-desc">${addon.desc}</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-${idx}-${addon.key}" ${addonState[addon.key]?'checked':''}>
+              <span class="toggle-slider"></span>
+            </label>`;
+          panel.appendChild(row);
+          row.querySelector(`#tog-${idx}-${addon.key}`).addEventListener('change',function(){
+            assembledBlocks[idx].addonState[addon.key]=this.checked;
+            liveUpdatePreview();
+          });
+        });
+        block.appendChild(panel);
+
+        chip.querySelector(`#cust-btn-${idx}`).addEventListener('click',()=>{
+          const open=panel.classList.toggle('open');
+          chip.querySelector(`#cust-btn-${idx}`).classList.toggle('open',open);
+        });
+      }
+      return block;
+    }
+
+    function removeBlock(idx) {
+      assembledBlocks[idx]=null;
+      const el=document.getElementById(`block-${idx}`);
+      if (el) el.remove();
+      liveUpdatePreview();
+    }
+
+    function liveUpdatePreview() {
+      const blocks=assembledBlocks.filter(b=>b!==null);
+      if (!blocks.length) { clearPreview(); return; }
+      showPreview(buildWrapper(blocks.map(b=>b.comp.html(userContent,b.addonState)).join('\n')));
+    }
+
+    function buildPreview() {
+      const blocks=assembledBlocks.filter(b=>b!==null);
+      if (!blocks.length) { alert('No components to build.'); return; }
+      showPreview(buildWrapper(blocks.map(b=>b.comp.html(userContent,b.addonState)).join('\n')));
+      const typeLabel=selectedScope==='section'?'Section':(selectedType||'article');
+      document.getElementById('done-summary').innerHTML=`<strong>${blocks.length} component${blocks.length!==1?'s':''}</strong> assembled for a <strong>${typeLabel}</strong> layout.`;
+      goToStep('step-done');
+    }
+
+    function buildWrapper(body) {
+      return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+/* ── YOUR CUSTOM CSS GOES HERE ── */
+body{font-family:Georgia,serif;padding:32px;max-width:860px;margin:0 auto;background:#fff;color:#333;}
+*{box-sizing:border-box;}
+</style></head><body>${body}</body></html>`;
+    }
+
+    function resetBuilder() {
+      assembledBlocks=[]; selectedType=selectedScope=null; userContent='';
+      document.getElementById('builder-content-input').value='';
+      document.getElementById('assembled-components').innerHTML='';
+      document.querySelectorAll('.scope-btn,.type-option').forEach(b=>b.classList.remove('selected'));
+      goToStep('step-content'); clearPreview();
+    }
+
+    // ── MODE / TABS / PREVIEW ──
+    function setMode(mode) {
+      currentMode=mode;
+      document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+      document.getElementById(`btn-${mode}`).classList.add('active');
+      document.getElementById('chat-window').style.display=mode==='describe'?'flex':'none';
+      document.getElementById('input-area').style.display=mode==='describe'?'flex':'none';
+      document.getElementById('paste-area').style.display=mode==='paste'?'flex':'none';
+      document.getElementById('builder-area').classList.toggle('visible',mode==='builder');
+      if (mode==='builder') goToStep('step-content');
+    }
+    function setPreviewTab(tab) {
+      currentPreviewTab=tab;
+      document.querySelectorAll('.preview-tab').forEach(t=>t.classList.remove('active'));
+      event.target.classList.add('active');
+      const has=!!document.getElementById('preview-frame').srcdoc;
+      document.getElementById('preview-frame').classList.toggle('visible',tab==='preview'&&has);
+      document.getElementById('code-view').classList.toggle('visible',tab==='code'&&has);
+      document.getElementById('preview-placeholder').style.display=has?'none':'flex';
+    }
+    function showPreview(html) {
+      const frame=document.getElementById('preview-frame');
+      frame.srcdoc=html; frame.classList.add('visible');
+      document.getElementById('preview-placeholder').style.display='none';
+      document.getElementById('code-output').textContent=html;
+      if (currentPreviewTab==='code'){document.getElementById('code-view').classList.add('visible');frame.classList.remove('visible');}
+    }
+    function clearPreview() {
+      document.getElementById('preview-frame').srcdoc='';
+      document.getElementById('preview-frame').classList.remove('visible');
+      document.getElementById('code-view').classList.remove('visible');
+      document.getElementById('preview-placeholder').style.display='flex';
+      document.getElementById('code-output').textContent='';
+    }
+    function previewPastedHTML() { const h=document.getElementById('html-input').value.trim(); if(h) showPreview(h); }
+    function copyCode() {
+      navigator.clipboard.writeText(document.getElementById('code-output').textContent).then(()=>{
+        const b=document.getElementById('copy-code-btn'); b.textContent='Copied!';
+        setTimeout(()=>b.textContent='Copy Code',1500);
+      });
+    }
+
+    // ── DESCRIBE MODE ──
+    function addMessage(text,role){const cw=document.getElementById('chat-window');const d=document.createElement('div');d.className=`message ${role}`;d.textContent=text;cw.appendChild(d);cw.scrollTop=cw.scrollHeight;return d;}
+    async function sendMessage(){
+      const input=document.getElementById('user-input'),msg=input.value.trim();
+      if(!msg)return; addMessage(msg,'user'); input.value='';
+      const t=addMessage('Thinking...','assistant');
+      try{const res=await fetch(`${API}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,config:'blog-articles'})});const data=await res.json();t.remove();addMessage(data.reply,'assistant');if(data.reply.includes('<')&&data.reply.includes('>'))showPreview(data.reply);}
+      catch{t.remove();addMessage('Error: Could not reach the server.','assistant');}
+    }
+    document.getElementById('send-btn').addEventListener('click',sendMessage);
+    document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  </script>
+
+</body>
+</html>
