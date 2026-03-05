@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Build</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left { display: flex; align-items: center; gap: 20px; }
+
+    #back-btn {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--brown-light); text-decoration: none; transition: color 0.2s;
+    }
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title { font-family: 'Playfair Display', serif; font-size: 18px; letter-spacing: 4px; color: var(--white); }
+
+    .topbar-badge {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--brown-light); background: var(--brown-mid);
+      padding: 3px 10px; border-radius: 20px; border: 1px solid var(--brown-warm);
+    }
+
+    #mode-toggle {
+      display: flex; gap: 4px; background: #111;
+      padding: 4px; border-radius: 6px; border: 1px solid #1c1c1c;
+    }
+
+    .mode-btn {
+      padding: 6px 14px; background: transparent; color: var(--text-muted);
+      border: none; border-radius: 4px; font-size: 12px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    .mode-btn.active { background: var(--brown-mid); color: var(--white); }
+    .mode-btn:hover:not(.active) { color: var(--white); }
+
+    /* ── WORKSPACE ── */
+    #workspace { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── LEFT PANEL ── */
+    #left-panel {
+      width: 42%; flex-shrink: 0; display: flex; flex-direction: column;
+      border-right: 1px solid #1c1c1c; background: #050505; overflow: hidden;
+    }
+
+    /* ── DESCRIBE MODE ── */
+    #chat-window {
+      display: flex; flex-direction: column; flex: 1;
+      overflow-y: auto; padding: 20px; gap: 12px;
+    }
+    #chat-window::-webkit-scrollbar { width: 4px; }
+    #chat-window::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .message {
+      padding: 10px 14px; border-radius: 8px; font-size: 13px;
+      line-height: 1.6; max-width: 85%;
+    }
+    .message.assistant { background: #111; border: 1px solid #1c1c1c; color: #c0b5ac; align-self: flex-start; }
+    .message.user { background: var(--brown-mid); border: 1px solid var(--brown-warm); color: var(--white); align-self: flex-end; }
+
+    #describe-input {
+      display: flex; gap: 10px; padding: 16px;
+      border-top: 1px solid #1c1c1c; flex-shrink: 0;
+    }
+
+    #user-input {
+      flex: 1; background: #111; color: var(--white);
+      border: 1px solid #2a1f1a; border-radius: 6px;
+      padding: 9px 12px; font-family: 'Open Sans', sans-serif;
+      font-size: 13px; resize: none; outline: none;
+    }
+    #user-input:focus { border-color: var(--brown-light); }
+
+    #send-btn {
+      padding: 9px 18px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: background 0.2s;
+    }
+    #send-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    /* ── PASTE MODE ── */
+    #paste-area {
+      display: none; flex-direction: column; gap: 12px; padding: 20px; flex: 1;
+    }
+    #paste-area label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+    #html-input {
+      flex: 1; background: #111; color: #c0b5ac; border: 1px solid #2a1f1a;
+      border-radius: 6px; padding: 14px; font-family: monospace; font-size: 12px;
+      resize: none; outline: none;
+    }
+    #preview-html-btn {
+      padding: 10px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: background 0.2s;
+    }
+    #preview-html-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    /* ── TEMPLATE BUILDER MODE ── */
+    #builder-area {
+      display: none; flex-direction: column; flex: 1; overflow: hidden;
+    }
+    #builder-area.visible { display: flex; }
+
+    /* Phase A: Type selection */
+    #phase-select {
+      display: flex; flex-direction: column; overflow-y: auto; padding: 20px; gap: 14px;
+    }
+    #phase-select::-webkit-scrollbar { width: 4px; }
+    #phase-select::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    .phase-header { display: flex; flex-direction: column; gap: 6px; padding-bottom: 14px; border-bottom: 1px solid #1c1c1c; }
+    .phase-title { font-size: 14px; font-weight: 600; color: var(--white); }
+    .phase-sub { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+    .scope-options, .type-options { display: flex; flex-direction: column; gap: 8px; }
+
+    .scope-btn, .type-option {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 14px; background: #111; border: 1px solid #1c1c1c;
+      border-radius: 6px; cursor: pointer; text-align: left;
+      font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    .scope-btn:hover, .type-option:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .scope-btn.selected, .type-option.selected { border-color: var(--brown-light); background: #1a1208; }
+
+    .scope-icon, .type-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .scope-name, .type-name { font-size: 13px; font-weight: 600; color: var(--white); display: block; margin-bottom: 2px; }
+    .scope-desc, .type-desc { font-size: 11px; color: var(--text-muted); display: block; line-height: 1.4; }
+
+    /* Component review strip */
+    #component-chips-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+
+    .add-component-btn {
+      padding: 9px 14px; background: transparent; color: var(--brown-light);
+      border: 1px dashed #3d2b1f; border-radius: 6px; font-size: 12px;
+      cursor: pointer; font-family: "Open Sans", sans-serif;
+      transition: all 0.2s; text-align: left; letter-spacing: 1px;
+    }
+    .add-component-btn:hover { border-color: var(--brown-light); color: var(--white); background: #1a1208; }
+
+    .picker-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; background: #111; border: 1px solid #1c1c1c;
+      border-radius: 6px; cursor: pointer; font-family: "Open Sans", sans-serif;
+      transition: all 0.2s;
+    }
+    .picker-item:hover { border-color: var(--brown-warm); background: #1a1208; }
+    .picker-item-icon { font-size: 14px; flex-shrink: 0; }
+    .picker-item-name { font-size: 12px; color: var(--white); }
+    .picker-item-desc { font-size: 10px; color: var(--text-muted); margin-left: auto; }
+
+    .builder-next-btn {
+      padding: 10px 20px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: "Open Sans", sans-serif; transition: background 0.2s;
+    }
+    .builder-next-btn:hover { background: var(--brown-light); color: var(--black); }
+
+    .builder-back-btn {
+      padding: 8px 16px; background: transparent; color: var(--text-muted);
+      border: 1px solid #2a2a2a; border-radius: 6px; font-size: 12px;
+      cursor: pointer; font-family: "Open Sans", sans-serif; transition: all 0.2s;
+    }
+    .builder-back-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    .strip-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; background: #1a1208;
+      border: 1px solid var(--brown-warm); border-radius: 20px;
+      font-size: 11px; color: var(--brown-light);
+      cursor: pointer; transition: all 0.2s; position: relative;
+    }
+    .strip-chip:hover { border-color: var(--brown-light); color: var(--white); }
+    .strip-chip.has-addons::after { content: '⚙'; font-size: 9px; opacity: 0.6; }
+
+    /* Add-on popover */
+    .addon-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 100;
+      background: #1a1208;
+      border: 1px solid var(--brown-warm);
+      border-radius: 6px;
+      padding: 10px 14px;
+      min-width: 220px;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .addon-popover.open { display: flex; }
+
+    .popover-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 2px;
+    }
+
+    /* addon-row styles moved to component block section */
+
+    .toggle-switch { position: relative; width: 34px; height: 18px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #2a2a2a;
+      border-radius: 18px; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 12px; height: 12px;
+      left: 3px; top: 3px; background: #555; border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--brown-warm); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); background: var(--white); }
+
+    /* Phase B: Edit chat for content input */
+    #phase-edit {
+      display: none; flex-direction: column; flex: 1; overflow: hidden;
+    }
+    #phase-edit.visible { display: flex; }
+
+    /* Template context bar */
+    #template-context {
+      padding: 10px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      background: #1a1208;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .context-info { display: flex; flex-direction: column; gap: 2px; }
+    .context-type { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--brown-light); }
+    .context-hint { font-size: 11px; color: var(--text-muted); }
+
+    #change-template-btn {
+      font-size: 11px; color: var(--text-muted); background: none;
+      border: 1px solid #2a2a2a; border-radius: 4px; padding: 4px 10px;
+      cursor: pointer; font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    #change-template-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    /* Edit chat window */
+    #edit-chat-window {
+      flex: 1; overflow-y: auto; padding: 20px; display: flex;
+      flex-direction: column; gap: 12px;
+    }
+    #edit-chat-window::-webkit-scrollbar { width: 4px; }
+    #edit-chat-window::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    /* Upload zone */
+    #upload-zone {
+      margin: 0 20px 0;
+      border: 1px dashed #2a1f1a;
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0d0d0d;
+      flex-shrink: 0;
+    }
+    #upload-zone:hover, #upload-zone.dragover { border-color: var(--brown-light); background: #1a1208; }
+    #upload-zone .upload-icon { font-size: 16px; opacity: 0.5; }
+    #upload-zone .upload-text { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    #upload-zone .upload-text span { color: var(--brown-light); cursor: pointer; text-decoration: underline; }
+    #upload-zone .upload-types { font-size: 10px; color: #3a2a20; letter-spacing: 1px; }
+    #file-input { display: none; }
+
+    #file-indicator {
+      margin: 6px 20px 0; display: none; align-items: center;
+      justify-content: space-between; padding: 6px 12px;
+      background: #1a1208; border: 1px solid var(--brown-warm);
+      border-radius: 6px; font-size: 12px; flex-shrink: 0;
+    }
+    #file-indicator.visible { display: flex; }
+    #file-name { color: var(--brown-light); display: flex; align-items: center; gap: 8px; }
+    #remove-file {
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 16px; line-height: 1; transition: color 0.2s;
+    }
+    #remove-file:hover { color: #ef4444; }
+
+    /* Edit controls */
+    #edit-controls {
+      padding: 12px 16px; border-top: 1px solid #1c1c1c;
+      background: #111; display: flex; gap: 10px;
+      align-items: center; flex-shrink: 0;
+    }
+
+    #content-input {
+      flex: 1; background: #1a1208; color: var(--white);
+      border: 1px solid #3d2b1f; border-radius: 6px;
+      padding: 9px 12px; font-family: 'Open Sans', sans-serif;
+      font-size: 13px; resize: none; outline: none; line-height: 1.5;
+    }
+    #content-input:focus { border-color: var(--brown-light); }
+    #content-input::placeholder { color: #4a3828; }
+
+    #style-select {
+      padding: 9px 10px; background: #1a1208; color: var(--white);
+      border: 1px solid #3d2b1f; border-radius: 6px; font-size: 12px;
+      font-family: 'Open Sans', sans-serif; outline: none; cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    #apply-btn {
+      padding: 10px 18px; background: var(--brown-warm); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    #apply-btn:hover { background: var(--brown-light); color: var(--black); }
+    #apply-btn:disabled { background: #2a1f1a; color: var(--text-muted); cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner {
+      width: 14px; height: 14px; border: 2px solid #2a1f1a;
+      border-top-color: var(--brown-light); border-radius: 50%;
+      animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .thinking-row { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+
+    /* ── RIGHT PANEL ── */
+    #preview-panel { flex: 1; display: flex; flex-direction: column; background: #0a0a0a; overflow: hidden; }
+
+    #preview-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; border-bottom: 1px solid #1c1c1c; flex-shrink: 0;
+    }
+
+    #preview-tabs { display: flex; gap: 4px; }
+
+    .preview-tab {
+      padding: 5px 14px; font-size: 12px; color: var(--text-muted);
+      cursor: pointer; border-radius: 4px; transition: all 0.2s; letter-spacing: 1px;
+    }
+    .preview-tab.active { background: var(--brown-mid); color: var(--white); }
+    .preview-tab:hover:not(.active) { color: var(--white); }
+
+    .preview-action-btn {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 4px; border: 1px solid #2a2a2a;
+      background: transparent; color: var(--text-muted); cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: all 0.2s;
+    }
+    .preview-action-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+
+    #preview-content { flex: 1; position: relative; overflow: hidden; }
+
+    #preview-placeholder {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px; color: var(--text-muted);
+    }
+    .placeholder-icon { font-size: 36px; opacity: 0.3; }
+    #preview-placeholder p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+    #preview-frame { width: 100%; height: 100%; border: none; display: none; background: #fff; }
+    #preview-frame.visible { display: block; }
+
+    #code-view { display: none; flex-direction: column; height: 100%; position: relative; }
+    #code-view.visible { display: flex; }
+
+    #copy-code-btn {
+      position: absolute; top: 12px; right: 12px; padding: 6px 14px;
+      background: var(--brown-mid); color: var(--white); border: 1px solid var(--brown-warm);
+      border-radius: 4px; font-size: 11px; cursor: pointer;
+      font-family: 'Open Sans', sans-serif; transition: background 0.2s; z-index: 10;
+    }
+    #copy-code-btn:hover { background: var(--brown-warm); }
+
+    #code-output {
+      flex: 1; overflow: auto; padding: 20px; font-family: monospace;
+      font-size: 12px; color: #c0b5ac; white-space: pre-wrap;
+      word-break: break-all; background: #060606;
+    }
+    /* ── COMPONENT BLOCKS ── */
+    .component-block {
+      border: 1px solid #2a1f1a;
+      border-radius: 8px;
+      background: #111;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .component-block:hover { border-color: var(--brown-warm); }
+    .component-block.dragging { opacity: 0.4; border-style: dashed; }
+    .component-block.drag-over { border-color: var(--brown-light); background: #1a1208; }
+
+    .component-chip {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px; gap: 10px;
+    }
+    .chip-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .chip-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    .drag-handle {
+      color: #3a2a20; cursor: grab; font-size: 13px;
+      user-select: none; flex-shrink: 0; transition: color 0.2s;
+    }
+    .drag-handle:hover { color: var(--text-muted); }
+    .drag-handle:active { cursor: grabbing; }
+
+    .chip-icon { font-size: 16px; flex-shrink: 0; }
+    .chip-name { font-size: 13px; color: var(--white); font-weight: 500; }
+
+    .chip-customize-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 12px; background: transparent;
+      color: var(--text-muted); border: 1px solid #2a2a2a;
+      border-radius: 4px; font-size: 11px; letter-spacing: 1px;
+      cursor: pointer; font-family: "Open Sans", sans-serif; transition: all 0.2s;
+    }
+    .chip-customize-btn:hover { border-color: var(--brown-warm); color: var(--brown-light); }
+    .chip-customize-btn.open { border-color: var(--brown-warm); color: var(--brown-light); background: #1a1208; }
+    .chip-customize-btn .arrow { font-size: 8px; transition: transform 0.2s; display: inline-block; }
+    .chip-customize-btn.open .arrow { transform: rotate(90deg); }
+
+    .chip-remove {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; background: transparent;
+      border: 1px solid #1c1c1c; border-radius: 4px;
+      color: #3a2a20; cursor: pointer; font-size: 16px;
+      line-height: 1; transition: all 0.2s; flex-shrink: 0;
+    }
+    .chip-remove:hover { background: rgba(239,68,68,0.08); border-color: #ef4444; color: #ef4444; }
+
+    /* ── ADD-ON PANEL ── */
+    .addon-panel {
+      display: none; flex-direction: column;
+      border-top: 1px solid #1c1c1c; background: #0d0d0d;
+    }
+    .addon-panel.open { display: flex; padding: 12px 16px; gap: 2px; }
+    .addon-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 10px;
+    }
+    .addon-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #1a1a1a;
+    }
+    .addon-row:last-child { border-bottom: none; }
+    .addon-row-info { display: flex; flex-direction: column; gap: 2px; }
+    .addon-row-name { font-size: 12px; color: #c0b5ac; }
+    .addon-row-desc { font-size: 10px; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Build</div>
+    </div>
+    <div id="mode-toggle">
+      <button class="mode-btn active" id="btn-describe" onclick="setMode('describe')">Describe</button>
+      <button class="mode-btn" id="btn-paste"    onclick="setMode('paste')">Paste HTML</button>
+      <button class="mode-btn" id="btn-builder"  onclick="setMode('builder')">Template Builder</button>
+    </div>
+  </div>
+
+  <div id="workspace">
+
+    <!-- LEFT PANEL -->
+    <div id="left-panel">
+
+      <!-- DESCRIBE MODE -->
+      <div id="chat-window">
+        <div class="message assistant">Welcome to Build! Describe what you want and I'll generate the HTML, switch to Paste HTML to preview your own code, or use Template Builder to pick a template and fill it with your content.</div>
+      </div>
+      <div id="describe-input">
+        <textarea id="user-input" placeholder="Describe what you want to build..." rows="2"></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+
+      <!-- PASTE MODE -->
+      <div id="paste-area">
+        <label>Paste your HTML below</label>
+        <textarea id="html-input" placeholder="<html>...</html>"></textarea>
+        <button id="preview-html-btn" onclick="previewPastedHTML()">Preview →</button>
+      </div>
+
+      <!-- TEMPLATE BUILDER MODE -->
+      <div id="builder-area">
+
+        <!-- PHASE A: Type + Component selection -->
+        <div id="phase-select">
+
+          <!-- Scope -->
+          <div class="phase-header">
+            <div class="phase-title">What are you creating?</div>
+            <div class="phase-sub">Pick a scope and article type. The template will assemble on the right, then you'll drop in your content.</div>
+          </div>
+
+          <div class="scope-options">
+            <button class="scope-btn" id="scope-article" onclick="selectScope('article')">
+              <span class="scope-icon">📄</span>
+              <div><span class="scope-name">Full Article</span><span class="scope-desc">Complete page — header, body, footer</span></div>
+            </button>
+            <button class="scope-btn" id="scope-section" onclick="selectScope('section')">
+              <span class="scope-icon">◧</span>
+              <div><span class="scope-name">Section</span><span class="scope-desc">A single block to drop into an existing page</span></div>
+            </button>
+          </div>
+
+          <!-- Article types (shown after Full Article selected) -->
+          <div class="type-options" id="type-options" style="display:none;">
+            <button class="type-option" onclick="selectType('article')">
+              <span class="type-icon">📝</span>
+              <div><span class="type-name">Article</span><span class="type-desc">Long-form editorial with hero, body, and related links</span></div>
+            </button>
+            <button class="type-option" onclick="selectType('catalog')">
+              <span class="type-icon">📋</span>
+              <div><span class="type-name">Catalog</span><span class="type-desc">Products or listings with grid layout and filters</span></div>
+            </button>
+            <button class="type-option" onclick="selectType('topic-action')">
+              <span class="type-icon">⚡</span>
+              <div><span class="type-name">Topic Action</span><span class="type-desc">Step-by-step instructions with a clear call to action</span></div>
+            </button>
+            <button class="type-option" onclick="selectType('topic-info')">
+              <span class="type-icon">💡</span>
+              <div><span class="type-name">Topic Info</span><span class="type-desc">Informational overview with intro, details, and summary</span></div>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- PHASE REVIEW: vertical component list with expand/collapse add-ons -->
+        <div id="phase-review" style="display:none;flex-direction:column;overflow-y:auto;padding:20px;gap:14px;">
+          <div class="phase-header">
+            <div class="phase-title">Review your template</div>
+            <div class="phase-sub">Expand any component to toggle add-ons. Add more components or remove ones you don't need.</div>
+          </div>
+          <div id="component-chips-row" style="display:flex;flex-direction:column;gap:14px;"></div>
+          <button class="add-component-btn" onclick="toggleComponentPicker()">+ Add Component</button>
+
+          <!-- Component picker panel -->
+          <div id="component-picker" style="display:none;flex-direction:column;gap:6px;border:1px solid #2a1f1a;border-radius:6px;background:#0a0a0a;padding:12px;">
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Choose a component to add</div>
+            <div id="picker-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;margin-top:4px;">
+            <button class="builder-next-btn" onclick="enterEditPhase()">Add Content →</button>
+            <button class="builder-back-btn" onclick="exitReviewPhase()">← Back</button>
+          </div>
+        </div>
+
+        <!-- PHASE B: Edit chat — content input + AI edit → fills template -->
+        <div id="phase-edit">
+
+          <!-- Template context bar -->
+          <div id="template-context">
+            <div class="context-info">
+              <span class="context-type" id="context-type-label">Article</span>
+              <span class="context-hint">Paste or type your content below — it will be edited to standards and applied to the template</span>
+            </div>
+            <button id="change-template-btn" onclick="exitEditPhase()">← Change Template</button>
+          </div>
+
+          <!-- Upload -->
+          <div id="upload-zone" style="margin-top:12px;">
+            <div class="upload-icon">↑</div>
+            <div>
+              <div class="upload-text">Drop a file or <span onclick="document.getElementById('file-input').click()">browse</span></div>
+              <div class="upload-types">.TXT · .MD · .DOCX · .PDF</div>
+            </div>
+            <input type="file" id="file-input" accept=".txt,.md,.pdf,.docx">
+          </div>
+          <div id="file-indicator">
+            <div id="file-name"><span>📄</span><span id="file-name-text"></span></div>
+            <button id="remove-file" onclick="removeFile()">×</button>
+          </div>
+
+          <!-- Edit chat history -->
+          <div id="edit-chat-window">
+            <div class="message assistant" id="edit-welcome-msg">
+              Your template is ready. Paste or type your content below and I'll edit it to brand standards and drop it straight into the layout.
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div id="edit-controls">
+            <textarea id="content-input" placeholder="Paste your content here..." rows="2"></textarea>
+            <select id="style-select">
+              <option value="professional">Professional</option>
+              <option value="editorial">Editorial</option>
+              <option value="concise">Concise</option>
+              <option value="persuasive">Persuasive</option>
+              <option value="conversational">Conversational</option>
+            </select>
+            <button id="apply-btn" onclick="applyContent()">Apply →</button>
+          </div>
+
+        </div><!-- end phase-edit -->
+
+      </div><!-- end builder-area -->
+
+    </div><!-- end left-panel -->
+
+    <!-- RIGHT PANEL -->
+    <div id="preview-panel">
+      <div id="preview-topbar">
+        <div id="preview-tabs">
+          <div class="preview-tab active" onclick="setPreviewTab('preview')">Preview</div>
+          <div class="preview-tab" onclick="setPreviewTab('code')">HTML Code</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="preview-action-btn" onclick="copyCode()">Copy Code</button>
+          <button class="preview-action-btn" onclick="clearPreview()">Clear</button>
+        </div>
+      </div>
+      <div id="preview-content">
+        <div id="preview-placeholder">
+          <div class="placeholder-icon">⬡</div>
+          <p>Select a template to begin</p>
+        </div>
+        <iframe id="preview-frame"></iframe>
+        <div id="code-view">
+          <button id="copy-code-btn" onclick="copyCode()">Copy Code</button>
+          <pre id="code-output"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end workspace -->
+
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const API = "http://localhost:5000";
+    let currentMode = "describe", currentPreviewTab = "preview";
+    let selectedType = null, selectedScope = null;
+    let assembledBlocks = []; // { comp, addonState }
+
+    // ════════════════════════════
+    // COMPONENT LIBRARY
+    // ════════════════════════════
+    const TYPE_COMPONENTS = {
+      article: [
+        {
+          name:"Hero Banner", icon:"🖼",
+          addons:[
+            {key:"eyebrow",  label:"Eyebrow Label",  desc:"Small category tag above title", default:true },
+            {key:"subtitle", label:"Subtitle",        desc:"Supporting line below title",    default:true },
+            {key:"date",     label:"Date & Author",   desc:"Byline below subtitle",          default:false},
+            {key:"badge",    label:"Status Badge",    desc:"e.g. New, Featured",            default:false},
+          ],
+          skeleton:`<div style="background:#e8eaf0;border-radius:4px;padding:48px 32px;margin-bottom:24px;"><div style="height:14px;background:#c8ccd8;border-radius:3px;width:60%;margin-bottom:16px;"></div><div style="height:28px;background:#b0b6c8;border-radius:3px;width:85%;margin-bottom:14px;"></div><div style="height:12px;background:#c8ccd8;border-radius:3px;width:70%;"></div></div>`,
+          html:(c,a)=>`<div style="background:#1a1a2e;color:#fff;padding:48px 32px;border-radius:4px;margin-bottom:24px;position:relative;">
+${a.badge?`<span style="position:absolute;top:20px;right:20px;background:#4a6fa5;color:#fff;font-size:11px;letter-spacing:2px;padding:4px 10px;border-radius:20px;text-transform:uppercase;">Featured</span>`:''}
+${a.eyebrow?`<p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#a0b0c8;margin-bottom:12px;">Article</p>`:''}
+<h1 style="font-size:36px;font-weight:700;margin-bottom:16px;line-height:1.2;">${getFirstLine(c)||'Article Title'}</h1>
+${a.subtitle?`<p style="font-size:15px;color:#b0bec5;line-height:1.7;">${getSecondLine(c)||'A compelling introduction.'}</p>`:''}
+${a.date?`<p style="font-size:12px;color:#7a8fa8;margin-top:16px;">By <strong>[ Author ]</strong> &nbsp;·&nbsp; ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p>`:''}
+</div>`
+        },
+        {
+          name:"Article Body", icon:"📝",
+          addons:[
+            {key:"dropcap",   label:"Drop Cap",   desc:"Large decorative first letter", default:false},
+            {key:"pullquote", label:"Pull Quote", desc:"Highlighted quote mid-article",  default:false},
+          ],
+          skeleton:`<div style="padding:0 8px;margin-bottom:24px;"><div style="height:12px;background:#e8e8e8;border-radius:3px;margin-bottom:10px;"></div><div style="height:12px;background:#e8e8e8;border-radius:3px;width:90%;margin-bottom:10px;"></div><div style="height:12px;background:#e8e8e8;border-radius:3px;width:95%;margin-bottom:10px;"></div><div style="height:12px;background:#e8e8e8;border-radius:3px;width:80%;"></div></div>`,
+          html:(c,a)=>{
+            const body=formatBodyContent(c), fl=getFirstLine(c)||'Your article body.';
+            return `<div style="padding:0 8px;margin-bottom:24px;">
+${a.dropcap?`<p style="font-size:15px;line-height:1.9;color:#333;"><span style="float:left;font-size:64px;line-height:0.75;padding-right:8px;padding-top:10px;font-family:Georgia,serif;color:#1a1a2e;font-weight:700;">${fl[0]||'A'}</span>${escHtml(fl.slice(1))}</p>`:
+`<div style="font-size:15px;line-height:1.9;color:#333;">${body}</div>`}
+${a.pullquote?`<blockquote style="border-left:4px solid #4a6fa5;padding:16px 24px;margin:24px 0;background:#f8f9fb;border-radius:0 4px 4px 0;"><p style="font-size:18px;font-style:italic;color:#2c3e50;line-height:1.6;">"${fl}"</p></blockquote>`:''}
+</div>`;
+          }
+        },
+        {
+          name:"Related Articles", icon:"🔗",
+          addons:[
+            {key:"icons",  label:"Arrow Icons", desc:"→ before each link",         default:true},
+            {key:"border", label:"Top Border",  desc:"Divider above this section", default:true},
+          ],
+          skeleton:`<div style="margin-top:24px;padding-top:20px;border-top:1px solid #e0e0e0;"><div style="height:10px;background:#e8e8e8;border-radius:3px;width:40%;margin-bottom:14px;"></div><div style="height:11px;background:#d0d8f0;border-radius:3px;width:70%;margin-bottom:8px;"></div><div style="height:11px;background:#d0d8f0;border-radius:3px;width:60%;margin-bottom:8px;"></div><div style="height:11px;background:#d0d8f0;border-radius:3px;width:65%;"></div></div>`,
+          html:(c,a)=>`<div style="margin-top:32px;${a.border?'padding-top:24px;border-top:1px solid #e0e0e0;':''}">
+<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:16px;">Related Articles</p>
+<div style="display:flex;flex-direction:column;gap:10px;">
+<a href="#" style="color:#4a6fa5;font-size:14px;text-decoration:none;">${a.icons?'→ ':''}How to write effective headlines</a>
+<a href="#" style="color:#4a6fa5;font-size:14px;text-decoration:none;">${a.icons?'→ ':''}Brand voice guidelines</a>
+<a href="#" style="color:#4a6fa5;font-size:14px;text-decoration:none;">${a.icons?'→ ':''}Content approval process</a>
+</div></div>`
+        },
+      ],
+      catalog: [
+        {
+          name:"Catalog Header", icon:"📋",
+          addons:[
+            {key:"subtitle",  label:"Subtitle",   desc:"Line below the title",  default:true },
+            {key:"itemcount", label:"Item Count", desc:"'24 items' label",      default:false},
+          ],
+          skeleton:`<div style="padding:24px;border-bottom:2px solid #e0e0e0;margin-bottom:20px;"><div style="height:24px;background:#c8c8c8;border-radius:3px;width:50%;margin-bottom:10px;"></div><div style="height:12px;background:#e0e0e0;border-radius:3px;width:65%;"></div></div>`,
+          html:(c,a)=>`<div style="padding:32px 24px 24px;border-bottom:2px solid #e0e0e0;margin-bottom:24px;">
+<h1 style="font-size:28px;font-weight:700;color:#1a1a2e;margin-bottom:8px;">${getFirstLine(c)||'Catalog Title'}</h1>
+${a.subtitle?`<p style="font-size:14px;color:#666;">${getSecondLine(c)||'Browse the items below.'}</p>`:''}
+${a.itemcount?`<p style="font-size:12px;color:#4a6fa5;margin-top:8px;">24 items</p>`:''}
+</div>`
+        },
+        {
+          name:"Filter Bar", icon:"⚙",
+          addons:[
+            {key:"search", label:"Search Input",  desc:"Text field to filter",   default:false},
+            {key:"sortby", label:"Sort Dropdown", desc:"Sort by Name, Date",     default:false},
+          ],
+          skeleton:`<div style="display:flex;gap:8px;margin-bottom:20px;"><div style="height:30px;width:60px;background:#4a6fa5;border-radius:20px;"></div><div style="height:30px;width:80px;background:#e0e0e0;border-radius:20px;"></div><div style="height:30px;width:80px;background:#e0e0e0;border-radius:20px;"></div></div>`,
+          html:(c,a)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+${a.search?`<input placeholder="Search..." style="padding:7px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;flex:1;min-width:160px;">`:''}
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<button style="padding:7px 16px;border:1px solid #4a6fa5;border-radius:20px;background:#4a6fa5;color:#fff;font-size:12px;cursor:pointer;">All</button>
+<button style="padding:7px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#666;font-size:12px;cursor:pointer;">Category A</button>
+<button style="padding:7px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#666;font-size:12px;cursor:pointer;">Category B</button>
+</div>
+${a.sortby?`<select style="padding:7px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;color:#555;margin-left:auto;"><option>Sort: Name</option><option>Sort: Date</option></select>`:''}
+</div>`
+        },
+        {
+          name:"Item Grid", icon:"⊞",
+          addons:[
+            {key:"price", label:"Price Tag",     desc:"Show price on each card", default:false},
+            {key:"btn",   label:"Action Button", desc:"Button on each card",     default:true },
+            {key:"badge", label:"Status Badge",  desc:"'New' badge on card",     default:false},
+          ],
+          skeleton:`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">${'<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;"><div style="height:80px;background:#e8eaf0;"></div><div style="padding:12px;"><div style="height:12px;background:#d0d0d0;border-radius:3px;width:70%;margin-bottom:8px;"></div><div style="height:28px;background:#e8e8e8;border-radius:3px;"></div></div></div>'.repeat(3)}</div>`,
+          html:(c,a)=>{
+            const lines=getContentLines(c).slice(0,3);
+            const items=(lines.length?lines:['Item One','Item Two','Item Three']);
+            const cards=items.map(l=>`<div style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;background:#fff;position:relative;">
+${a.badge?`<span style="position:absolute;top:8px;left:8px;background:#22c55e;color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;">New</span>`:''}
+<div style="height:80px;background:#f0f4f8;"></div>
+<div style="padding:14px;"><p style="font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:4px;">${l}</p>
+${a.price?`<p style="font-size:13px;color:#4a6fa5;margin-bottom:8px;">$99.00</p>`:''}
+${a.btn?`<button style="width:100%;padding:7px;background:#1a1a2e;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">View Details</button>`:''}
+</div></div>`).join('');
+            return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">${cards}</div>`;
+          }
+        },
+      ],
+      'topic-action': [
+        {
+          name:"Action Banner", icon:"⚡",
+          addons:[
+            {key:"eyebrow",  label:"Eyebrow Label", desc:"Small tag above the title",      default:true },
+            {key:"subtitle", label:"Subtitle",       desc:"Supporting description",         default:true },
+            {key:"time",     label:"Time Estimate",  desc:"'Estimated time: 10 min'",      default:false},
+          ],
+          skeleton:`<div style="background:#e8f0f8;border-radius:4px;padding:40px 32px;margin-bottom:28px;text-align:center;"><div style="height:10px;background:#c0d0e8;border-radius:3px;width:30%;margin:0 auto 14px;"></div><div style="height:24px;background:#a8bcd4;border-radius:3px;width:60%;margin:0 auto 12px;"></div><div style="height:12px;background:#c0d0e8;border-radius:3px;width:70%;margin:0 auto;"></div></div>`,
+          html:(c,a)=>`<div style="background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;padding:40px 32px;border-radius:4px;margin-bottom:28px;text-align:center;">
+${a.eyebrow?`<p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#7db8e0;margin-bottom:12px;">How To</p>`:''}
+<h1 style="font-size:30px;font-weight:700;margin-bottom:12px;">${getFirstLine(c)||'Task Title'}</h1>
+${a.subtitle?`<p style="font-size:14px;color:#b8d4ea;line-height:1.6;">${getSecondLine(c)||'Follow the steps below.'}</p>`:''}
+${a.time?`<p style="font-size:12px;color:#7db8e0;margin-top:14px;">⏱ Estimated time: 10 minutes</p>`:''}
+</div>`
+        },
+        {
+          name:"Step-by-Step", icon:"📋",
+          addons:[
+            {key:"numbers",  label:"Step Numbers", desc:"Numbered circles per step", default:true },
+            {key:"dividers", label:"Dividers",     desc:"Lines between steps",       default:true },
+            {key:"tips",     label:"Tip Tag",      desc:"Tip callout after step 1",  default:false},
+          ],
+          skeleton:`<div style="margin-bottom:24px;">${Array.from({length:3},(_,i)=>`<div style="display:flex;gap:16px;padding:12px 0;${i>0?'border-top:1px solid #f0f0f0;':''}"><div style="width:28px;height:28px;border-radius:50%;background:#c0d0e8;flex-shrink:0;"></div><div style="flex:1;"><div style="height:12px;background:#e0e0e0;border-radius:3px;width:80%;"></div></div></div>`).join('')}</div>`,
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const steps=(lines.length?lines:['Log in to the portal','Navigate to the section','Complete and submit']).map((l,i)=>
+              `<div style="display:flex;gap:16px;align-items:flex-start;padding:${a.dividers&&i>0?'14px 0':'8px 0'};${a.dividers&&i>0?'border-top:1px solid #f0f0f0;':''}">
+${a.numbers?`<div style="width:28px;height:28px;border-radius:50%;background:#2d6a9f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${i+1}</div>`:
+`<div style="width:8px;height:8px;border-radius:50%;background:#2d6a9f;flex-shrink:0;margin-top:8px;"></div>`}
+<div><p style="font-size:14px;color:#333;line-height:1.6;">${l}</p>
+${a.tips&&i===0?`<p style="font-size:12px;color:#4a6fa5;margin-top:6px;">💡 Tip: Have your credentials ready before starting.</p>`:''}
+</div></div>`).join('');
+            return `<div style="margin-bottom:24px;">${steps}</div>`;
+          }
+        },
+        {
+          name:"Call to Action", icon:"🎯",
+          addons:[
+            {key:"secondary", label:"Secondary Button", desc:"Second softer action", default:false},
+            {key:"note",      label:"Helper Note",      desc:"Small text below btn", default:true },
+          ],
+          skeleton:`<div style="background:#e8f0f8;border:1px solid #c0d8f0;border-radius:6px;padding:24px;margin-top:24px;text-align:center;"><div style="height:14px;background:#c0d0e8;border-radius:3px;width:40%;margin:0 auto 14px;"></div><div style="height:36px;background:#a8bcd4;border-radius:4px;width:140px;margin:0 auto;"></div></div>`,
+          html:(c,a)=>`<div style="background:#f0f7ff;border:1px solid #c0d8f0;border-radius:6px;padding:24px 28px;margin-top:24px;text-align:center;">
+<p style="font-size:16px;font-weight:600;color:#1a3a5c;margin-bottom:12px;">Ready to get started?</p>
+<div style="display:flex;gap:10px;justify-content:center;margin-bottom:${a.note?'12px':'0'};">
+<button style="padding:10px 28px;background:#2d6a9f;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;">Get Started</button>
+${a.secondary?`<button style="padding:10px 28px;background:#fff;color:#2d6a9f;border:1px solid #2d6a9f;border-radius:4px;font-size:14px;cursor:pointer;">Learn More</button>`:''}
+</div>
+${a.note?`<p style="font-size:12px;color:#4a6fa5;">Need help? Contact IT at extension 4401.</p>`:''}
+</div>`
+        },
+        {
+          name:"Warning Callout", icon:"⚠",
+          addons:[
+            {key:"icon",  label:"Warning Icon", desc:"⚠ before text",        default:true},
+            {key:"title", label:"Bold Title",   desc:"'Important Note' title",default:true},
+          ],
+          skeleton:`<div style="background:#fff8e8;border-left:4px solid #f5a623;padding:14px 18px;border-radius:0 4px 4px 0;margin:20px 0;"><div style="height:11px;background:#f0d090;border-radius:3px;width:40%;margin-bottom:8px;"></div><div style="height:11px;background:#f0e0b0;border-radius:3px;width:80%;"></div></div>`,
+          html:(c,a)=>`<div style="background:#fffbea;border-left:4px solid #f5a623;padding:14px 18px;border-radius:0 4px 4px 0;margin:20px 0;">
+${a.title?`<p style="font-size:13px;font-weight:600;color:#7a5c00;margin-bottom:4px;">${a.icon?'⚠ ':''}Important Note</p>`:''}
+<p style="font-size:13px;color:#7a5c00;line-height:1.6;">${!a.title&&a.icon?'⚠ ':''}Add warnings or prerequisites here before users begin.</p>
+</div>`
+        },
+      ],
+      'topic-info': [
+        {
+          name:"Info Header", icon:"💡",
+          addons:[
+            {key:"eyebrow",  label:"Eyebrow Label", desc:"Category tag above title",default:true },
+            {key:"subtitle", label:"Subtitle",       desc:"Intro line below title", default:true },
+            {key:"divider",  label:"Bottom Divider", desc:"Line below the header",  default:true },
+          ],
+          skeleton:`<div style="padding:32px 0 24px;border-bottom:3px solid #e0e0e0;margin-bottom:24px;"><div style="height:10px;background:#c8d8f0;border-radius:3px;width:30%;margin-bottom:14px;"></div><div style="height:28px;background:#c0c8d8;border-radius:3px;width:70%;margin-bottom:12px;"></div><div style="height:12px;background:#d8d8d8;border-radius:3px;width:80%;"></div></div>`,
+          html:(c,a)=>`<div style="padding:32px 0 24px;${a.divider?'border-bottom:3px solid #e0e0e0;':''}margin-bottom:28px;">
+${a.eyebrow?`<p style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#4a6fa5;margin-bottom:10px;">Overview</p>`:''}
+<h1 style="font-size:32px;font-weight:700;color:#1a1a2e;margin-bottom:12px;line-height:1.2;">${getFirstLine(c)||'Topic Title'}</h1>
+${a.subtitle?`<p style="font-size:15px;color:#555;line-height:1.7;max-width:600px;">${getSecondLine(c)||'A clear introduction to the topic.'}</p>`:''}
+</div>`
+        },
+        {
+          name:"Key Details", icon:"📌",
+          addons:[
+            {key:"sectionlabel", label:"Section Label", desc:"'Key Details' heading", default:true },
+            {key:"icons",        label:"Diamond Icons", desc:"◆ before each item",    default:true },
+            {key:"dividers",     label:"Dividers",      desc:"Lines between items",   default:true },
+          ],
+          skeleton:`<div style="margin-bottom:24px;"><div style="height:10px;background:#d8d8d8;border-radius:3px;width:30%;margin-bottom:14px;"></div>${Array.from({length:3},()=>`<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;"><div style="width:16px;height:16px;background:#c8d8f0;border-radius:2px;flex-shrink:0;margin-top:2px;"></div><div style="flex:1;height:12px;background:#e0e0e0;border-radius:3px;"></div></div>`).join('')}</div>`,
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const items=(lines.length?lines:['First key detail','Second key detail','Third key detail']).map(l=>
+              `<div style="display:flex;gap:12px;padding:12px 0;${a.dividers?'border-bottom:1px solid #f0f0f0;':''}align-items:flex-start;">
+${a.icons?`<span style="color:#4a6fa5;font-size:16px;flex-shrink:0;">◆</span>`:''}
+<p style="font-size:14px;color:#333;line-height:1.6;">${l}</p>
+</div>`).join('');
+            return `<div style="margin-bottom:28px;">${a.sectionlabel?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:14px;">Key Details</p>`:''}${items}</div>`;
+          }
+        },
+        {
+          name:"Summary Box", icon:"📦",
+          addons:[
+            {key:"label",  label:"Summary Label", desc:"'Summary' heading",     default:true },
+            {key:"border", label:"Accent Border", desc:"Left colored border",   default:false},
+          ],
+          skeleton:`<div style="background:#f0f2f8;border:1px solid #d8dce8;border-radius:6px;padding:20px;margin-top:20px;"><div style="height:10px;background:#c8d0e8;border-radius:3px;width:25%;margin-bottom:12px;"></div><div style="height:12px;background:#d8dce8;border-radius:3px;width:90%;margin-bottom:8px;"></div><div style="height:12px;background:#d8dce8;border-radius:3px;width:75%;"></div></div>`,
+          html:(c,a)=>`<div style="background:#f8f9fb;border:1px solid #e0e6f0;${a.border?'border-left:4px solid #4a6fa5;':''}border-radius:6px;padding:24px;margin-top:24px;">
+${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#4a6fa5;margin-bottom:12px;">Summary</p>`:''}
+<p style="font-size:14px;color:#333;line-height:1.8;">${getFirstLine(c)||'A brief summary of key takeaways.'}</p>
+</div>`
+        },
+        {
+          name:"FAQ Section", icon:"❓",
+          addons:[
+            {key:"sectionlabel", label:"Section Label",  desc:"'FAQ' heading above",    default:true},
+            {key:"bordered",     label:"Bordered Cards", desc:"Border each FAQ item",   default:true},
+          ],
+          skeleton:`<div style="margin-top:24px;"><div style="height:10px;background:#d8d8d8;border-radius:3px;width:35%;margin-bottom:14px;"></div>${Array.from({length:2},()=>`<div style="border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:8px;"><div style="height:12px;background:#d0d0d0;border-radius:3px;width:60%;margin-bottom:8px;"></div><div style="height:11px;background:#e0e0e0;border-radius:3px;width:85%;"></div></div>`).join('')}</div>`,
+          html:(c,a)=>{
+            const faqs=[{q:'What is this used for?',a:'Replace with your actual FAQ answer.'},{q:'Who should use this?',a:'Replace with your actual FAQ answer.'}];
+            const items=faqs.map(f=>`<div style="${a.bordered?'border:1px solid #e0e0e0;border-radius:6px;':'border-bottom:1px solid #f0f0f0;'}padding:16px;margin-bottom:8px;">
+<p style="font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:6px;">${f.q}</p>
+<p style="font-size:13px;color:#555;line-height:1.6;">${f.a}</p>
+</div>`).join('');
+            return `<div style="margin-top:28px;">${a.sectionlabel?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:16px;">Frequently Asked Questions</p>`:''}${items}</div>`;
+          }
+        },
+      ],
+      section: [
+        {
+          name:"Text Block", icon:"📝",
+          addons:[{key:"label", label:"Section Label", desc:"Small heading above text", default:false}],
+          skeleton:`<div style="margin-bottom:20px;"><div style="height:12px;background:#e0e0e0;border-radius:3px;margin-bottom:10px;"></div><div style="height:12px;background:#e0e0e0;border-radius:3px;width:90%;margin-bottom:10px;"></div><div style="height:12px;background:#e0e0e0;border-radius:3px;width:80%;"></div></div>`,
+          html:(c,a)=>`<div style="margin-bottom:20px;">${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:10px;">Section</p>`:''}<div style="font-size:15px;line-height:1.9;color:#333;">${formatBodyContent(c)}</div></div>`
+        },
+        {
+          name:"Callout Box", icon:"💬",
+          addons:[
+            {key:"icon",  label:"Icon",       desc:"💡 before text",           default:true },
+            {key:"title", label:"Bold Title", desc:"Bold title in the callout", default:false},
+          ],
+          skeleton:`<div style="background:#e8f0f8;border-left:4px solid #4a6fa5;padding:14px 18px;border-radius:0 6px 6px 0;margin-bottom:20px;"><div style="height:12px;background:#c0d0e8;border-radius:3px;width:80%;"></div></div>`,
+          html:(c,a)=>`<div style="background:#f0f7ff;border-left:4px solid #4a6fa5;padding:16px 20px;border-radius:0 6px 6px 0;margin-bottom:20px;">
+${a.title?`<p style="font-size:13px;font-weight:600;color:#1a3a5c;margin-bottom:6px;">Key Information</p>`:''}
+<p style="font-size:14px;color:#2c3e50;line-height:1.7;">${a.icon?'💡 ':''}${getFirstLine(c)||'Key information to highlight.'}</p>
+</div>`
+        },
+        {
+          name:"Bullet List", icon:"•",
+          addons:[
+            {key:"label",  label:"Section Label",  desc:"Heading above the list",  default:false},
+            {key:"styled", label:"Styled Bullets", desc:"◆ instead of bullets",    default:false},
+          ],
+          skeleton:`<div style="margin-bottom:20px;">${Array.from({length:3},()=>`<div style="display:flex;gap:8px;margin-bottom:8px;"><div style="width:6px;height:6px;background:#aaa;border-radius:50%;flex-shrink:0;margin-top:6px;"></div><div style="height:12px;background:#e0e0e0;border-radius:3px;flex:1;"></div></div>`).join('')}</div>`,
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const items=(lines.length?lines:['Item one','Item two','Item three']).map(l=>
+              a.styled?`<div style="display:flex;gap:10px;margin-bottom:8px;"><span style="color:#4a6fa5;flex-shrink:0;">◆</span><span style="font-size:14px;color:#333;line-height:1.6;">${l}</span></div>`:
+              `<li style="font-size:14px;color:#333;margin-bottom:8px;line-height:1.6;">${l}</li>`).join('');
+            return `<div style="margin-bottom:20px;">${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:10px;">Key Points</p>`:''}${a.styled?items:`<ul style="padding-left:20px;">${items}</ul>`}</div>`;
+          }
+        },
+        {
+          name:"Numbered Steps", icon:"1.",
+          addons:[
+            {key:"label",   label:"Section Label",  desc:"Heading above steps",  default:false},
+            {key:"circles", label:"Circle Numbers", desc:"Numbers in circles",   default:true },
+          ],
+          skeleton:`<div style="margin-bottom:20px;">${Array.from({length:3},(_,i)=>`<div style="display:flex;gap:14px;margin-bottom:12px;"><div style="width:24px;height:24px;border-radius:50%;background:#c0d0e8;flex-shrink:0;"></div><div style="flex:1;height:12px;background:#e0e0e0;border-radius:3px;margin-top:6px;"></div></div>`).join('')}</div>`,
+          html:(c,a)=>{
+            const lines=getContentLines(c).filter(l=>l);
+            const items=(lines.length?lines:['First step','Second step','Third step']).map((l,i)=>
+              `<div style="display:flex;gap:14px;margin-bottom:12px;align-items:flex-start;">
+${a.circles?`<div style="width:24px;height:24px;border-radius:50%;background:#2d6a9f;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>`:
+`<span style="font-size:14px;font-weight:700;color:#2d6a9f;flex-shrink:0;min-width:20px;">${i+1}.</span>`}
+<p style="font-size:14px;color:#333;line-height:1.6;padding-top:${a.circles?'2px':'0'}">${l}</p>
+</div>`).join('');
+            return `<div style="margin-bottom:20px;">${a.label?`<p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:12px;">Steps</p>`:''}${items}</div>`;
+          }
+        },
+        {
+          name:"Image Placeholder", icon:"🖼",
+          addons:[
+            {key:"caption", label:"Caption", desc:"Text below the image",        default:false},
+            {key:"rounded", label:"Rounded", desc:"Rounded corners on image",    default:true },
+          ],
+          skeleton:`<div style="background:#e8e8e8;border:2px dashed #ccc;border-radius:8px;height:160px;margin-bottom:20px;"></div>`,
+          html:(c,a)=>`<div style="margin-bottom:20px;"><div style="background:#f0f0f0;border:2px dashed #ccc;${a.rounded?'border-radius:8px;':''}height:180px;display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;">[ Image placeholder ]</div>${a.caption?`<p style="font-size:12px;color:#888;text-align:center;margin-top:8px;font-style:italic;">Image caption goes here</p>`:''}</div>`
+        },
+      ],
+    };
+
+    // ── HELPERS ──
+    function getFirstLine(c)  { return c.split('\n').map(l=>l.trim()).filter(l=>l)[0]||''; }
+    function getSecondLine(c) { return c.split('\n').map(l=>l.trim()).filter(l=>l)[1]||''; }
+    function getContentLines(c) { return c.split('\n').map(l=>l.replace(/^[-*•\d.)\s]+/,'').trim()).filter(l=>l).map(l=>escHtml(l)); }
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function formatBodyContent(c) {
+      if (!c.trim()) return '<p style="color:#aaa;font-style:italic;">Your content will appear here.</p>';
+      return c.split(/\n+/).filter(p=>p.trim()).map(p=>{
+        const l=p.trim();
+        if (l.match(/^[-*•]\s/)) return `<p style="margin-bottom:8px;">• ${escHtml(l.replace(/^[-*•]\s/,''))}</p>`;
+        if (l.match(/^\d+[.)]\s/)) return `<p style="margin-bottom:8px;">${escHtml(l)}</p>`;
+        return `<p style="margin-bottom:14px;">${escHtml(l)}</p>`;
+      }).join('');
+    }
+
+    // ── SCOPE / TYPE SELECTION ──
+    function selectScope(scope) {
+      selectedScope = scope;
+      document.querySelectorAll('.scope-btn').forEach(b=>b.classList.remove('selected'));
+      document.getElementById(`scope-${scope}`).classList.add('selected');
+      if (scope === 'article') {
+        document.getElementById('type-options').style.display = 'flex';
+      } else {
+        document.getElementById('type-options').style.display = 'none';
+        assembleAndShowSkeleton('section');
+      }
+    }
+
+    function selectType(type) {
+      selectedType = type;
+      document.querySelectorAll('.type-option').forEach(b=>b.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      assembleAndShowSkeleton(type);
+    }
+
+    function assembleAndShowSkeleton(type) {
+      const comps = TYPE_COMPONENTS[type]||[];
+      assembledBlocks = comps.map(comp=>{
+        const addonState={};
+        (comp.addons||[]).forEach(a=>{ addonState[a.key]=a.default; });
+        return {comp, addonState};
+      });
+
+      // Render vertical chip list using buildReviewChip
+      _uid = 0;
+      const row = document.getElementById('component-chips-row');
+      row.innerHTML = '';
+      assembledBlocks.forEach(block=>{
+        block.uid = nextUid();
+        row.appendChild(buildReviewChip(block));
+      });
+
+      document.getElementById('phase-select').style.display = 'none';
+      const pr = document.getElementById('phase-review');
+      pr.style.display = 'flex';
+      renderSamplePreview();
+    }
+
+    // Sample content per type for the review preview
+    const SAMPLE_CONTENT = {
+      article: `Using Express to Edit Content\nExpress is a powerful tool designed to help writers and editors improve their content with AI assistance. Whether you are refining a draft or building a new article from scratch, Express guides you through every step.\n• Streamlined editing workflow\n• Tracked changes with clean output\n• Built-in brand voice standards`,
+      catalog: `Service Catalog\nBrowse available IT services and submit requests directly from this page.\n• Remote Access Setup\n• Software Installation\n• Hardware Replacement`,
+      'topic-action': `How to Submit a Content Request\nFollow these steps to submit your content for review and approval through the CURE platform.\n1. Log in to CURE using your SSO credentials\n2. Navigate to the Intake tab and click New Request\n3. Fill in the content details and attach your draft\n4. Assign a product owner and submit for review`,
+      'topic-info': `About the Content Approval Process\nThe content approval process ensures all published articles meet brand standards before going live.\n• All articles must pass editorial review\n• Product owners approve final content in CURE\n• Changes are tracked and versioned automatically`,
+      section: `Key Information\nThis section contains important details that users need to understand before proceeding. Review carefully before taking action.\n• Review all prerequisites\n• Confirm access permissions\n• Contact IT if you encounter issues`
+    };
+
+    function renderSamplePreview() {
+      const type = selectedType || selectedScope || 'article';
+      const sample = SAMPLE_CONTENT[type] || SAMPLE_CONTENT.article;
+      const assembled = assembledBlocks.map(b=>b.comp.html(sample, b.addonState)).join('\n');
+      showPreview(buildWrapper(assembled));
+    }
+
+    function removeReviewBlock(uid) {
+      assembledBlocks = assembledBlocks.filter(b=>b.uid !== uid);
+      const el = document.getElementById(`block-${uid}`);
+      if (el) el.remove();
+      renderSamplePreview();
+    }
+
+    let _uid = 0;
+    function nextUid() { return ++_uid; }
+
+    function addComponentBlock(comp) {
+      const addonState = {};
+      (comp.addons||[]).forEach(a=>{ addonState[a.key]=a.default; });
+      const uid = nextUid();
+      const block = {comp, addonState, uid};
+      assembledBlocks.push(block);
+      const row = document.getElementById('component-chips-row');
+      row.appendChild(buildReviewChip(block));
+      renderSamplePreview();
+    }
+
+    function buildReviewChip(block) {
+      const {comp, addonState, uid} = block;
+      const blockEl = document.createElement('div');
+      blockEl.className = 'component-block';
+      blockEl.id = `block-${uid}`;
+
+      const chipRow = document.createElement('div');
+      chipRow.className = 'component-chip';
+      chipRow.innerHTML = `
+        <div class="chip-left">
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <span class="chip-icon">${comp.icon}</span>
+          <span class="chip-name">${comp.name}</span>
+        </div>
+        <div class="chip-right">
+          ${comp.addons&&comp.addons.length ? `<button class="chip-customize-btn" id="cust-btn-${uid}"><span class="arrow">▸</span> Customize</button>` : ''}
+          <button class="chip-remove" onclick="removeReviewBlock(${uid})">×</button>
+        </div>`;
+      blockEl.appendChild(chipRow);
+
+      if (comp.addons&&comp.addons.length) {
+        const panel = document.createElement('div');
+        panel.className = 'addon-panel';
+        panel.id = `addon-panel-${uid}`;
+
+        const addonLabel = document.createElement('div');
+        addonLabel.className = 'addon-label';
+        addonLabel.textContent = 'Optional Add-ons';
+        panel.appendChild(addonLabel);
+
+        comp.addons.forEach(addon=>{
+          const addonRow = document.createElement('div');
+          addonRow.className = 'addon-row';
+          addonRow.innerHTML = `
+            <div class="addon-row-info">
+              <span class="addon-row-name">${addon.label}</span>
+              <span class="addon-row-desc">${addon.desc}</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="rev-tog-${uid}-${addon.key}" ${addonState[addon.key]?'checked':''}>
+              <span class="toggle-slider"></span>
+            </label>`;
+          panel.appendChild(addonRow);
+          addonRow.querySelector(`#rev-tog-${uid}-${addon.key}`).addEventListener('change', function(){
+            block.addonState[addon.key] = this.checked;
+            renderSamplePreview();
+          });
+        });
+        blockEl.appendChild(panel);
+
+        const custBtn = chipRow.querySelector(`#cust-btn-${uid}`);
+        custBtn.addEventListener('click', ()=>{
+          const open = panel.classList.toggle('open');
+          custBtn.classList.toggle('open', open);
+        });
+      }
+      // Drag to reorder
+      blockEl.setAttribute('draggable', 'true');
+
+      blockEl.addEventListener('dragstart', e => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', uid);
+        setTimeout(() => blockEl.classList.add('dragging'), 0);
+      });
+
+      blockEl.addEventListener('dragend', () => {
+        blockEl.classList.remove('dragging');
+        document.querySelectorAll('.component-block').forEach(b => b.classList.remove('drag-over'));
+      });
+
+      blockEl.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        document.querySelectorAll('.component-block').forEach(b => b.classList.remove('drag-over'));
+        blockEl.classList.add('drag-over');
+      });
+
+      blockEl.addEventListener('dragleave', () => {
+        blockEl.classList.remove('drag-over');
+      });
+
+      blockEl.addEventListener('drop', e => {
+        e.preventDefault();
+        blockEl.classList.remove('drag-over');
+        const draggedUid = parseInt(e.dataTransfer.getData('text/plain'));
+        if (draggedUid === uid) return;
+
+        // Reorder assembledBlocks array
+        const fromIdx = assembledBlocks.findIndex(b => b.uid === draggedUid);
+        const toIdx   = assembledBlocks.findIndex(b => b.uid === uid);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = assembledBlocks.splice(fromIdx, 1);
+        assembledBlocks.splice(toIdx, 0, moved);
+
+        // Re-render the chip list in new order
+        const row = document.getElementById('component-chips-row');
+        row.innerHTML = '';
+        assembledBlocks.forEach(b => row.appendChild(buildReviewChip(b)));
+        renderSamplePreview();
+      });
+
+      return blockEl;
+    }
+
+    function toggleComponentPicker() {
+      const picker = document.getElementById('component-picker');
+      const isOpen = picker.style.display === 'flex';
+      picker.style.display = isOpen ? 'none' : 'flex';
+      if (!isOpen) populatePicker();
+    }
+
+    function populatePicker() {
+      const type = selectedType || selectedScope || 'article';
+      // All components available = current type + section components (always available)
+      const typeComps = TYPE_COMPONENTS[type] || [];
+      const sectionComps = type !== 'section' ? TYPE_COMPONENTS['section'] : [];
+      const allComps = [...typeComps, ...sectionComps.filter(sc => !typeComps.find(tc => tc.name === sc.name))];
+
+      const list = document.getElementById('picker-list');
+      list.innerHTML = '';
+      allComps.forEach(comp=>{
+        const item = document.createElement('div');
+        item.className = 'picker-item';
+        item.innerHTML = `
+          <span class="picker-item-icon">${comp.icon}</span>
+          <span class="picker-item-name">${comp.name}</span>`;
+        item.addEventListener('click', ()=>{
+          addComponentBlock(comp);
+          document.getElementById('component-picker').style.display = 'none';
+        });
+        list.appendChild(item);
+      });
+    }
+
+    // ── ENTER EDIT PHASE ──
+    function enterEditPhase() {
+      document.getElementById('phase-review').style.display = 'none';
+      document.getElementById('phase-edit').classList.add('visible');
+
+      const typeNames = {
+        'article':'Article','catalog':'Catalog',
+        'topic-action':'Topic Action','topic-info':'Topic Info','section':'Section'
+      };
+      const label = typeNames[selectedType||selectedScope]||'Template';
+      document.getElementById('context-type-label').textContent = label + ' Template';
+    }
+
+    function exitEditPhase() {
+      document.getElementById('phase-edit').classList.remove('visible');
+      document.getElementById('phase-select').style.display = 'flex';
+      document.getElementById('phase-select').style.display = 'none';
+      const pr = document.getElementById('phase-review');
+      pr.style.display = 'flex';
+      renderSamplePreview();
+    }
+
+    // ── APPLY CONTENT (AI edit → fill template) ──
+    async function applyContent() {
+      const rawContent = document.getElementById('content-input').value.trim();
+      if (!rawContent) return;
+
+      const style = document.getElementById('style-select').value;
+      const btn   = document.getElementById('apply-btn');
+      btn.disabled = true; btn.textContent = 'Applying...';
+
+      // Show user message in edit chat
+      addEditMessage(rawContent.length > 120 ? rawContent.slice(0,120)+'…' : rawContent, 'user');
+      document.getElementById('content-input').value = '';
+
+      const thinking = addEditMessage('', 'thinking');
+
+      let editedContent = rawContent;
+
+      try {
+        const typeNames = {'article':'article','catalog':'catalog','topic-action':'how-to guide','topic-info':'informational article','section':'content section'};
+        const typeName  = typeNames[selectedType||selectedScope]||'article';
+        const systemPrompt = `You are editing content for a ${typeName} in a ${style} style, following brand voice standards: clear, active voice, concise, no jargon. Edit the following and return ONLY the edited text with no commentary:`;
+
+        const res  = await fetch(`${API}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`${systemPrompt}\n\n${rawContent}`,config:'blog-articles'})});
+        const data = await res.json();
+        if (data.reply && !data.reply.startsWith('[Mock')) editedContent = data.reply;
+        else editedContent = mockEdit(rawContent, style);
+      } catch {
+        editedContent = mockEdit(rawContent, style);
+      }
+
+      thinking.remove();
+      addEditMessage('Content edited and applied to your template.', 'assistant');
+
+      // Fill template with edited content and update preview live
+      const assembled = assembledBlocks.map(b=>b.comp.html(editedContent, b.addonState)).join('\n');
+      showPreview(buildWrapper(assembled));
+
+      btn.disabled=false; btn.textContent='Apply →';
+    }
+
+    function addEditMessage(text, role) {
+      const cw = document.getElementById('edit-chat-window');
+      const d  = document.createElement('div');
+      if (role==='thinking') {
+        d.className='message assistant';
+        d.innerHTML='<div class="thinking-row"><div class="spinner"></div>Editing to brand standards...</div>';
+      } else {
+        d.className=`message ${role}`;
+        d.textContent=text;
+      }
+      cw.appendChild(d);
+      cw.scrollTop=cw.scrollHeight;
+      return d;
+    }
+
+    // Mock edit transform
+    function mockEdit(text, style) {
+      let t=text;
+      if(style==='concise'){t=t.replace(/\bdue to the fact that\b/g,'because').replace(/\bat this point in time\b/g,'now').replace(/\bbasically\b/g,'').replace(/\bactually\b/g,'');}
+      if(style==='professional'){t=t.replace(/\bkinda\b/g,'somewhat').replace(/\bwanna\b/g,'want to').replace(/\bgonna\b/g,'going to').replace(/\bcan't\b/g,'cannot').replace(/\bdon't\b/g,'do not');}
+      if(style==='conversational'){t=t.replace(/\bcannot\b/g,"can't").replace(/\bdo not\b/g,"don't").replace(/\butilize\b/g,'use');}
+      return t.replace(/\s{2,}/g,' ').trim();
+    }
+
+    // ── FILE UPLOAD ──
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput  = document.getElementById('file-input');
+    uploadZone.addEventListener('dragover', e=>{e.preventDefault();uploadZone.classList.add('dragover');});
+    uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)handleFile(f);});
+    uploadZone.addEventListener('click',()=>fileInput.click());
+    fileInput.addEventListener('change',()=>{if(fileInput.files[0])handleFile(fileInput.files[0]);});
+
+    async function handleFile(file) {
+      const ext=file.name.split('.').pop().toLowerCase();
+      if(!['txt','md','pdf','docx'].includes(ext)){alert('Unsupported file type.');return;}
+      try{
+        let text='';
+        if(ext==='txt'||ext==='md') text=await file.text();
+        else if(ext==='docx'){const ab=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});text=r.value;}
+        else if(ext==='pdf'){const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;const pages=[];for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();pages.push(c.items.map(i=>i.str).join(' '));}text=pages.join('\n\n');}
+        document.getElementById('content-input').value=text.trim();
+        document.getElementById('file-name-text').textContent=file.name;
+        document.getElementById('file-indicator').classList.add('visible');
+      }catch(err){alert('Could not read the file. Please paste your text directly.');}
+      fileInput.value='';
+    }
+
+    function removeFile(){
+      document.getElementById('content-input').value='';
+      document.getElementById('file-indicator').classList.remove('visible');
+    }
+
+    // ── MODE SWITCHING ──
+    function setMode(mode) {
+      currentMode=mode;
+      document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+      document.getElementById(`btn-${mode}`).classList.add('active');
+      document.getElementById('chat-window').style.display     = mode==='describe'?'flex':'none';
+      document.getElementById('describe-input').style.display  = mode==='describe'?'flex':'none';
+      document.getElementById('paste-area').style.display      = mode==='paste'?'flex':'none';
+      document.getElementById('builder-area').classList.toggle('visible', mode==='builder');
+      if (mode==='builder') {
+        document.getElementById('phase-select').style.display='flex';
+        document.getElementById('phase-review').style.display='none';
+        document.getElementById('phase-edit').classList.remove('visible');
+      }
+    }
+
+    // ── PREVIEW ──
+    function buildWrapper(body){return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>/* ── YOUR CUSTOM CSS GOES HERE ── */\nbody{font-family:Georgia,serif;padding:32px;max-width:860px;margin:0 auto;background:#fff;color:#333;}*{box-sizing:border-box;}</style></head><body>${body}</body></html>`;}
+
+    function setPreviewTab(tab){
+      currentPreviewTab=tab;
+      document.querySelectorAll('.preview-tab').forEach(t=>t.classList.remove('active'));
+      event.target.classList.add('active');
+      const has=!!document.getElementById('preview-frame').srcdoc;
+      document.getElementById('preview-frame').classList.toggle('visible',tab==='preview'&&has);
+      document.getElementById('code-view').classList.toggle('visible',tab==='code'&&has);
+      document.getElementById('preview-placeholder').style.display=has?'none':'flex';
+    }
+
+    function showPreview(html){
+      const frame=document.getElementById('preview-frame');
+      frame.srcdoc=html; frame.classList.add('visible');
+      document.getElementById('preview-placeholder').style.display='none';
+      document.getElementById('code-output').textContent=html;
+      if(currentPreviewTab==='code'){document.getElementById('code-view').classList.add('visible');frame.classList.remove('visible');}
+    }
+
+    function clearPreview(){
+      document.getElementById('preview-frame').srcdoc='';
+      document.getElementById('preview-frame').classList.remove('visible');
+      document.getElementById('code-view').classList.remove('visible');
+      document.getElementById('preview-placeholder').style.display='flex';
+      document.getElementById('code-output').textContent='';
+    }
+
+    function previewPastedHTML(){const h=document.getElementById('html-input').value.trim();if(h)showPreview(h);}
+
+    function copyCode(){
+      const code=document.getElementById('code-output').textContent;
+      if(!code)return;
+      navigator.clipboard.writeText(code).then(()=>{
+        document.querySelectorAll('#copy-code-btn, .preview-action-btn').forEach(b=>{if(b.textContent.includes('Copy')){b.textContent='Copied!';setTimeout(()=>b.textContent='Copy Code',1500);}});
+      });
+    }
+
+    // ── DESCRIBE MODE ──
+    function addMessage(text,role){const cw=document.getElementById('chat-window');const d=document.createElement('div');d.className=`message ${role}`;d.textContent=text;cw.appendChild(d);cw.scrollTop=cw.scrollHeight;return d;}
+    async function sendMessage(){
+      const input=document.getElementById('user-input'),msg=input.value.trim();if(!msg)return;
+      addMessage(msg,'user');input.value='';
+      const t=addMessage('Thinking...','assistant');
+      try{const res=await fetch(`${API}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,config:'blog-articles'})});const data=await res.json();t.remove();addMessage(data.reply,'assistant');if(data.reply.includes('<')&&data.reply.includes('>'))showPreview(data.reply);}
+      catch{t.remove();addMessage('Error: Could not reach the server.','assistant');}
+    }
+    document.getElementById('send-btn').addEventListener('click',sendMessage);
+    document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  </script>
+
+</body>
+</html>
