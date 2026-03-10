@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXPRESS — Edit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    :root {
+      --black: #000000;
+      --brown-deep: #1a0e08;
+      --brown-mid: #3d2008;
+      --brown-warm: #6b3a1f;
+      --brown-light: #c49a6c;
+      --brown-pale: #e8d5be;
+      --white: #ffffff;
+      --text-muted: #7a6a5a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1c1c1c;
+      flex-shrink: 0;
+    }
+
+    #topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #back-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #back-btn:hover { color: var(--white); }
+
+    .topbar-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: var(--white);
+    }
+
+    .topbar-badge {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--brown-light);
+      background: var(--brown-mid);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--brown-warm);
+    }
+
+    /* Legend */
+    #legend {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .legend-dot.added     { background: rgba(34,197,94,0.3);  border: 1px solid #22c55e; }
+    .legend-dot.removed   { background: rgba(239,68,68,0.15); border: 1px solid #ef4444; }
+
+    /* ── WORKSPACE ── */
+    #workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL — INPUT ── */
+    #input-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1c1c1c;
+      background: #0a0a0a;
+    }
+
+    .panel-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .word-count {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    #user-text {
+      flex: 1;
+      padding: 24px;
+      background: transparent;
+      color: #d0c5bc;
+      border: none;
+      outline: none;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.9;
+      resize: none;
+    }
+
+    #user-text::placeholder { color: #3a2a20; }
+
+    /* Style selector + submit */
+    #controls {
+      padding: 14px 20px;
+      border-top: 1px solid #1c1c1c;
+      background: #111;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #style-select {
+      flex: 1;
+      padding: 9px 12px;
+      background: #1a1208;
+      color: var(--white);
+      border: 1px solid #3d2b1f;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Open Sans', sans-serif;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #style-select:focus { border-color: var(--brown-light); }
+
+    #edit-btn {
+      padding: 10px 22px;
+      background: var(--brown-warm);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    #edit-btn:hover { background: var(--brown-light); color: var(--black); }
+    #edit-btn:disabled { background: #2a1f1a; color: var(--text-muted); cursor: not-allowed; }
+
+    /* ── RIGHT PANEL — DIFF VIEW ── */
+    #output-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      background: #0d0d0d;
+    }
+
+    #output-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1c1c1c;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .output-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .action-btn {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid #2a2a2a;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover { border-color: var(--brown-warm); color: var(--white); }
+    .action-btn.active { background: var(--brown-mid); border-color: var(--brown-warm); color: var(--white); }
+
+    /* Toggle tabs */
+    #view-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .view-tab {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .view-tab + .view-tab { border-left: 1px solid #2a2a2a; }
+    .view-tab.active { background: var(--brown-mid); color: var(--white); }
+    .view-tab:hover:not(.active) { color: var(--white); }
+
+    #diff-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.9;
+      color: #d0c5bc;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    #diff-view::-webkit-scrollbar { width: 4px; }
+    #diff-view::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    #clean-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.9;
+      color: #d0c5bc;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    #clean-view::-webkit-scrollbar { width: 4px; }
+    #clean-view::-webkit-scrollbar-thumb { background: #2a1f1a; border-radius: 4px; }
+
+    #clean-view p { margin-bottom: 14px; }
+    #clean-view strong { color: var(--white); font-weight: 600; }
+    #clean-view ul, #clean-view ol { margin-bottom: 14px; padding-left: 20px; }
+    #clean-view li { margin-bottom: 6px; line-height: 1.7; }
+
+    #diff-view p { margin-bottom: 14px; }
+    #diff-view strong { color: var(--white); font-weight: 600; }
+    #diff-view ul, #diff-view ol { margin-bottom: 14px; padding-left: 20px; }
+    #diff-view li { margin-bottom: 6px; line-height: 1.7; }
+
+    /* Placeholder */
+    #diff-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .placeholder-icon { font-size: 36px; opacity: 0.3; }
+
+    #diff-placeholder p {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Stats bar */
+    #stats-bar {
+      padding: 10px 20px;
+      border-top: 1px solid #1c1c1c;
+      background: #111;
+      display: flex;
+      gap: 24px;
+      flex-shrink: 0;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .stat-num {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .stat-num.yellow { color: #fbbf24; }
+    .stat-num.green  { color: #22c55e; }
+    .stat-num.red    { color: #ef4444; }
+
+    /* ── DIFF MARKUP ── */
+    .diff-added {
+      background: rgba(34,197,94,0.15);
+      border-bottom: 2px solid #22c55e;
+      border-radius: 2px;
+      padding: 0 2px;
+      color: #86efac;
+    }
+
+    .diff-removed {
+      text-decoration: underline;
+      text-decoration-color: #ef4444;
+      text-decoration-style: wavy;
+      color: #fca5a5;
+      background: rgba(239,68,68,0.1);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    /* Thinking spinner */
+    .thinking-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 13px;
+      padding: 24px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #2a1f1a;
+      border-top-color: var(--brown-light);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FILE UPLOAD ── */
+    #upload-zone {
+      margin: 12px 20px 0;
+      border: 1px dashed #2a1f1a;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0d0d0d;
+      flex-shrink: 0;
+    }
+
+    #upload-zone:hover, #upload-zone.dragover {
+      border-color: var(--brown-light);
+      background: #1a1208;
+    }
+
+    #upload-zone .upload-icon {
+      font-size: 22px;
+      opacity: 0.5;
+    }
+
+    #upload-zone .upload-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    #upload-zone .upload-text span {
+      color: var(--brown-light);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    #upload-zone .upload-types {
+      font-size: 10px;
+      color: #3a2a20;
+      letter-spacing: 1px;
+    }
+
+    #file-input { display: none; }
+
+    #file-indicator {
+      margin: 6px 20px 0;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #1a1208;
+      border: 1px solid var(--brown-warm);
+      border-radius: 6px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    #file-indicator.visible { display: flex; }
+
+    #file-name {
+      color: var(--brown-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #file-name .file-icon { font-size: 14px; }
+
+    #remove-file {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    #remove-file:hover { color: #ef4444; }
+
+    #upload-loading {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 6px 20px 0;
+      flex-shrink: 0;
+    }
+
+    #upload-loading.visible { display: flex; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <a href="index.html" id="back-btn">← Back</a>
+      <div class="topbar-title">EXPRESS</div>
+      <div class="topbar-badge">Edit</div>
+    </div>
+    <div id="legend">
+      <div class="legend-item">
+        <div class="legend-dot added"></div>
+        <span>Added</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot removed"></div>
+        <span>Removed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div id="workspace">
+
+    <!-- LEFT: INPUT -->
+    <div id="input-panel">
+      <div class="panel-header">
+        <span class="panel-label">Your Text</span>
+        <span class="word-count" id="word-count">0 words</span>
+      </div>
+
+      <!-- UPLOAD ZONE -->
+      <div id="upload-zone">
+        <div class="upload-icon">↑</div>
+        <div class="upload-text">
+          Drag & drop a file here or <span onclick="document.getElementById('file-input').click()">browse</span>
+        </div>
+        <div class="upload-types">.txt &nbsp;·&nbsp; .docx &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .md</div>
+      </div>
+      <input type="file" id="file-input" accept=".txt,.docx,.pdf,.md">
+
+      <!-- FILE INDICATOR -->
+      <div id="upload-loading">
+        <div class="spinner"></div>
+        <span>Reading file...</span>
+      </div>
+      <div id="file-indicator">
+        <div id="file-name"><span class="file-icon">📄</span><span id="file-name-text"></span></div>
+        <button id="remove-file" onclick="removeFile()" title="Remove file">×</button>
+      </div>
+      <textarea id="user-text" placeholder="Paste or type your content here to be edited..."></textarea>
+      <div id="controls">
+        <select id="style-select">
+          <option value="professional">Professional — formal, polished</option>
+          <option value="editorial">Editorial — magazine / article style</option>
+          <option value="concise">Concise — trim the fat, keep it tight</option>
+          <option value="persuasive">Persuasive — compelling, action-oriented</option>
+          <option value="conversational">Conversational — friendly, approachable</option>
+        </select>
+        <button id="edit-btn" onclick="runEdit()">Edit →</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: DIFF OUTPUT -->
+    <div id="output-panel">
+      <div id="output-header">
+        <span class="panel-label">Edited Output</span>
+        <div class="output-actions">
+          <div id="view-toggle">
+            <button class="view-tab active" onclick="setViewTab('diff')">Tracked</button>
+            <button class="view-tab" onclick="setViewTab('clean')">Clean</button>
+          </div>
+          <button class="action-btn" onclick="copyClean()">Copy Clean</button>
+          <button class="action-btn" onclick="clearAll()">Clear</button>
+        </div>
+      </div>
+
+      <div id="diff-placeholder">
+        <div class="placeholder-icon">✦</div>
+        <p>Edited text will appear here</p>
+      </div>
+
+      <div id="diff-view" style="display:none;"></div>
+      <div id="clean-view" style="display:none;"></div>
+
+      <div id="stats-bar" style="display:none;">
+        <div class="stat">
+          <span class="stat-num green" id="stat-added">0</span>
+          <span>added</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num red" id="stat-removed">0</span>
+          <span>removed</span>
+        </div>
+        <div class="stat" style="margin-left:auto;">
+          <span class="stat-num" id="stat-score" style="color:var(--brown-light);">—</span>
+          <span>clarity score</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+    let cleanEditedText = "";
+    let currentViewTab = "diff";
+
+    // ── VIEW TOGGLE ──
+    function setViewTab(tab) {
+      currentViewTab = tab;
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase() === tab));
+      const hasDiff = document.getElementById('diff-view').innerHTML !== '';
+      if (!hasDiff) return;
+      document.getElementById('diff-view').style.display  = tab === 'diff'  ? 'block' : 'none';
+      document.getElementById('clean-view').style.display = tab === 'clean' ? 'block' : 'none';
+    }
+
+    // ── FORMAT TEXT ──
+    // Converts plain text with markdown into HTML with paragraphs, lists, bold
+    function formatText(text) {
+      // Convert **bold** and *italic*
+      function inlineFormat(str) {
+        return str
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+      }
+
+      const lines = text.split('\n');
+      const output = [];
+      let inUl = false, inOl = false;
+
+      function closeLists() {
+        if (inUl) { output.push('</ul>'); inUl = false; }
+        if (inOl) { output.push('</ol>'); inOl = false; }
+      }
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          closeLists();
+          return;
+        }
+
+        // Numbered list: "1. item" or "1) item"
+        const olMatch = trimmed.match(/^(\d+)[.)]\s+(.+)/);
+        if (olMatch) {
+          if (inUl) { output.push('</ul>'); inUl = false; }
+          if (!inOl) { output.push('<ol>'); inOl = true; }
+          output.push(`<li>${inlineFormat(olMatch[2])}</li>`);
+          return;
+        }
+
+        // Bullet list: "- item" or "* item" or "• item"
+        const ulMatch = trimmed.match(/^[-*•]\s+(.+)/);
+        if (ulMatch) {
+          if (inOl) { output.push('</ol>'); inOl = false; }
+          if (!inUl) { output.push('<ul style="padding-left:20px;margin-bottom:12px;">'); inUl = true; }
+          output.push(`<li>${inlineFormat(ulMatch[1])}</li>`);
+          return;
+        }
+
+        // Regular paragraph
+        closeLists();
+        output.push(`<p>${inlineFormat(trimmed)}</p>`);
+      });
+
+      closeLists();
+      return output.join('');
+    }
+
+    // ── PDF.js setup ──
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // ── FILE UPLOAD ──
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput  = document.getElementById('file-input');
+
+    uploadZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleFile(fileInput.files[0]);
+    });
+
+    async function handleFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const allowed = ['txt', 'md', 'pdf', 'docx'];
+      if (!allowed.includes(ext)) {
+        alert('Unsupported file type. Please upload a .txt, .md, .pdf, or .docx file.');
+        return;
+      }
+
+      // Show loading
+      document.getElementById('upload-loading').classList.add('visible');
+      document.getElementById('file-indicator').classList.remove('visible');
+
+      try {
+        let text = '';
+
+        if (ext === 'txt' || ext === 'md') {
+          text = await file.text();
+        }
+
+        else if (ext === 'docx') {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          text = result.value;
+        }
+
+        else if (ext === 'pdf') {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const pages = [];
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            pages.push(content.items.map(item => item.str).join(' '));
+          }
+          text = pages.join('\n\n');
+        }
+
+        // Populate text area
+        const textarea = document.getElementById('user-text');
+        textarea.value = text.trim();
+        textarea.dispatchEvent(new Event('input'));
+
+        // Show file badge
+        document.getElementById('file-name-text').textContent = file.name;
+        document.getElementById('file-indicator').classList.add('visible');
+
+      } catch (err) {
+        alert('Could not read the file. Please try again or paste your text directly.');
+        console.error(err);
+      }
+
+      document.getElementById('upload-loading').classList.remove('visible');
+      fileInput.value = '';
+    }
+
+    function removeFile() {
+      document.getElementById('user-text').value = '';
+      document.getElementById('file-indicator').classList.remove('visible');
+      document.getElementById('word-count').textContent = '0 words';
+      cleanEditedText = '';
+    }
+
+    // Word count
+    document.getElementById('user-text').addEventListener('input', function() {
+      const words = this.value.trim().split(/\s+/).filter(w => w).length;
+      document.getElementById('word-count').textContent = `${words} word${words !== 1 ? 's' : ''}`;
+    });
+
+    // ── DIFF ENGINE ──
+    // Aligns paragraphs via LCS before word-diffing each matched pair,
+    // so that inserted/deleted paragraphs don't cause cascading false "replaced" hits.
+    function computeDiff(original, edited) {
+      const origParas = original.split(/\n+/).filter(p => p.trim());
+      const editParas = edited.split(/\n+/).filter(p => p.trim());
+
+      let totalAdded = 0, totalRemoved = 0;
+      const paraHtmls = [];
+
+      // --- Step 1: align paragraphs with a similarity-based LCS ---
+      // Two paragraphs "match" if they share enough words (Jaccard-like overlap).
+      function paraSimilarity(a, b) {
+        const wa = new Set(a.toLowerCase().split(/\s+/).filter(w => w.length > 1));
+        const wb = new Set(b.toLowerCase().split(/\s+/).filter(w => w.length > 1));
+        if (!wa.size && !wb.size) return 1;
+        let shared = 0;
+        wa.forEach(w => { if (wb.has(w)) shared++; });
+        return shared / Math.max(wa.size, wb.size);
+      }
+
+      // Build DP table for paragraph-level LCS (match if similarity >= 0.3)
+      const MATCH_THRESHOLD = 0.3;
+      const m = origParas.length, n = editParas.length;
+      const dp = Array.from({length: m + 1}, () => new Array(n + 1).fill(0));
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          if (paraSimilarity(origParas[i-1], editParas[j-1]) >= MATCH_THRESHOLD) {
+            dp[i][j] = dp[i-1][j-1] + 1;
+          } else {
+            dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+          }
+        }
+      }
+
+      // Backtrack to get the alignment as a sequence of operations
+      const ops = []; // each op: {type: 'match'|'add'|'remove', origIdx, editIdx}
+      let i = m, j = n;
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && paraSimilarity(origParas[i-1], editParas[j-1]) >= MATCH_THRESHOLD && dp[i][j] === dp[i-1][j-1] + 1) {
+          ops.unshift({type: 'match', origIdx: i-1, editIdx: j-1});
+          i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+          ops.unshift({type: 'add', editIdx: j-1});
+          j--;
+        } else {
+          ops.unshift({type: 'remove', origIdx: i-1});
+          i--;
+        }
+      }
+
+      // --- Step 2: render each operation ---
+      for (const op of ops) {
+        if (op.type === 'add') {
+          const editText = editParas[op.editIdx];
+          paraHtmls.push(`<p><span class="diff-added">${escapeHtml(editText)}</span></p>`);
+          totalAdded += editText.trim().split(/\s+/).length;
+        } else if (op.type === 'remove') {
+          const origText = origParas[op.origIdx];
+          paraHtmls.push(`<p><span class="diff-removed">${escapeHtml(origText)}</span></p>`);
+          totalRemoved += origText.trim().split(/\s+/).length;
+        } else {
+          // Matched pair — word-level diff
+          const origText = origParas[op.origIdx];
+          const editText = editParas[op.editIdx];
+          const origWords = origText.trim().split(/\s+/).filter(w => w.length > 0);
+          const editWords = editText.trim().split(/\s+/).filter(w => w.length > 0);
+          const lcs = buildLCS(origWords, editWords);
+          const result = [];
+          let wi = 0, wj = 0, lcsIdx = 0;
+
+          while (wi < origWords.length || wj < editWords.length) {
+            const origWord = origWords[wi];
+            const editWord = editWords[wj];
+            const lcsWord  = lcs[lcsIdx];
+
+            if (wi < origWords.length && wj < editWords.length &&
+                origWord === lcsWord && editWord === lcsWord) {
+              // Both in LCS — unchanged
+              result.push(escapeHtml(editWord));
+              wi++; wj++; lcsIdx++;
+            } else if (wi < origWords.length && origWord !== lcsWord) {
+              // Orig word not in LCS — removed
+              result.push(`<span class="diff-removed">${escapeHtml(origWord)}</span>`);
+              totalRemoved++;
+              wi++;
+            } else if (wj < editWords.length && editWord !== lcsWord) {
+              // Edit word not in LCS — added
+              result.push(`<span class="diff-added">${escapeHtml(editWord)}</span>`);
+              totalAdded++;
+              wj++;
+            } else {
+              if (wi < origWords.length) wi++;
+              if (wj < editWords.length) wj++;
+            }
+          }
+          paraHtmls.push(`<p>${result.join(' ')}</p>`);
+        }
+      }
+
+      return {
+        html: paraHtmls.join(''),
+        addedCount: totalAdded,
+        removedCount: totalRemoved
+      };
+    }
+
+    function isPunctuation(word) {
+      return /^[.,;:!?'"()\-—]+$/.test(word);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function buildLCS(a, b) {
+      // Dynamic programming LCS
+      const m = a.length, n = b.length;
+      const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          if (a[i-1] === b[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+          else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+        }
+      }
+      // Backtrack
+      const lcs = [];
+      let i = m, j = n;
+      while (i > 0 && j > 0) {
+        if (a[i-1] === b[j-1]) { lcs.unshift(a[i-1]); i--; j--; }
+        else if (dp[i-1][j] > dp[i][j-1]) i--;
+        else j--;
+      }
+      return lcs;
+    }
+
+    function computeClarityScore(original, edited, replaced, added, removed) {
+      const origWords = original.trim().split(/\s+/).length;
+      const editWords = edited.trim().split(/\s+/).length;
+      const changeRatio = (replaced + added + removed) / Math.max(origWords, 1);
+      // Score 0-100: fewer changes to shorter text = higher score
+      let score = Math.round(100 - (changeRatio * 60));
+      if (editWords < origWords) score = Math.min(score + 10, 100); // bonus for trimming
+      return Math.max(score, 0);
+    }
+
+    // ── MOCK EDIT (replaces mock_llm for now) ──
+    // When real LLM is connected, this will be replaced by the API call
+    function mockEdit(text, style) {
+      // Simulate some edits based on style
+      let edited = text;
+
+      // Fix common issues
+      edited = edited.replace(/\bi\b/g, 'I');
+      edited = edited.replace(/\s+,/g, ',');
+      edited = edited.replace(/\s+\./g, '.');
+      edited = edited.replace(/,([^\s])/g, ', $1');
+      edited = edited.replace(/\.([^\s\n])/g, '. $1');
+      edited = edited.replace(/\s{2,}/g, ' ');
+
+      if (style === 'concise') {
+        edited = edited.replace(/\bin order to\b/g, 'to');
+        edited = edited.replace(/\bdue to the fact that\b/g, 'because');
+        edited = edited.replace(/\bat this point in time\b/g, 'now');
+        edited = edited.replace(/\bvery unique\b/g, 'unique');
+        edited = edited.replace(/\bbasically\b/g, '');
+        edited = edited.replace(/\bactually\b/g, '');
+      }
+
+      if (style === 'professional') {
+        edited = edited.replace(/\bkinda\b/g, 'somewhat');
+        edited = edited.replace(/\bkind of\b/g, 'somewhat');
+        edited = edited.replace(/\bwanna\b/g, 'want to');
+        edited = edited.replace(/\bgonna\b/g, 'going to');
+        edited = edited.replace(/\bgotta\b/g, 'need to');
+        edited = edited.replace(/\bcan't\b/g, 'cannot');
+        edited = edited.replace(/\bdon't\b/g, 'do not');
+        edited = edited.replace(/\bwon't\b/g, 'will not');
+      }
+
+      if (style === 'conversational') {
+        edited = edited.replace(/\bcannot\b/g, "can't");
+        edited = edited.replace(/\bdo not\b/g, "don't");
+        edited = edited.replace(/\bwill not\b/g, "won't");
+        edited = edited.replace(/\butilize\b/g, 'use');
+        edited = edited.replace(/\bpurchase\b/g, 'buy');
+      }
+
+      if (style === 'persuasive') {
+        edited = edited.replace(/\byou can\b/g, 'you will');
+        edited = edited.replace(/\bmight\b/g, 'will');
+        edited = edited.replace(/\bcould\b/g, 'can');
+      }
+
+      // Clean up extra spaces from replacements
+      edited = edited.replace(/\s{2,}/g, ' ').trim();
+      return edited;
+    }
+
+    // ── RUN EDIT ──
+    async function runEdit() {
+      const text = document.getElementById('user-text').value.trim();
+      if (!text) return;
+
+      const style = document.getElementById('style-select').value;
+      const btn = document.getElementById('edit-btn');
+
+      // Show thinking state
+      btn.disabled = true;
+      btn.textContent = 'Editing...';
+      document.getElementById('diff-placeholder').style.display = 'none';
+      document.getElementById('clean-view').style.display = 'none';
+      document.getElementById('diff-view').style.display = 'flex';
+      document.getElementById('stats-bar').style.display = 'none';
+      document.getElementById('diff-view').innerHTML = `
+        <div class="thinking-row">
+          <div class="spinner"></div>
+          Analyzing and editing your text...
+        </div>`;
+
+      // Small delay to feel natural
+      await new Promise(r => setTimeout(r, 800));
+
+      try {
+        // Try real API first, fall back to mock
+        let editedText;
+        try {
+          const res = await fetch(`${API}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `Edit the following text in a ${style} style. Return ONLY the edited text with no commentary:\n\n${text}`, config: 'blog-articles' })
+          });
+          const data = await res.json();
+          editedText = data.reply;
+          // If mock response, fall back
+          if (editedText.startsWith('[Mock response')) editedText = mockEdit(text, style);
+        } catch {
+          editedText = mockEdit(text, style);
+        }
+
+        cleanEditedText = editedText;
+
+        const { html, addedCount, removedCount } = computeDiff(text, editedText);
+        const score = computeClarityScore(text, editedText, 0, addedCount, removedCount);
+
+        // Diff view — already wrapped in <p> tags by computeDiff
+        document.getElementById('diff-view').innerHTML = html;
+
+        // Clean view — format with bold rendering and paragraph breaks
+        document.getElementById('clean-view').innerHTML = formatText(editedText);
+
+        // Show correct view based on current tab
+        document.getElementById('diff-view').style.display  = currentViewTab === 'diff'  ? 'block' : 'none';
+        document.getElementById('clean-view').style.display = currentViewTab === 'clean' ? 'block' : 'none';
+
+        // Update stats
+        document.getElementById('stat-added').textContent    = addedCount;
+        document.getElementById('stat-removed').textContent  = removedCount;
+        document.getElementById('stat-score').textContent    = `${score}/100`;
+        document.getElementById('stats-bar').style.display   = 'flex';
+
+      } catch (err) {
+        document.getElementById('diff-view').innerHTML = `<p style="color:var(--text-muted);font-style:italic;">Something went wrong. Please try again.</p>`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Edit →';
+    }
+
+    function copyClean() {
+      if (!cleanEditedText) return;
+      navigator.clipboard.writeText(cleanEditedText).then(() => {
+        const btn = document.querySelector('.action-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Clean', 1500);
+      });
+    }
+
+    function clearAll() {
+      document.getElementById('user-text').value = '';
+      document.getElementById('diff-view').style.display = 'none';
+      document.getElementById('diff-view').innerHTML = '';
+      document.getElementById('clean-view').style.display = 'none';
+      document.getElementById('clean-view').innerHTML = '';
+      document.getElementById('diff-placeholder').style.display = 'flex';
+      document.getElementById('stats-bar').style.display = 'none';
+      document.getElementById('word-count').textContent = '0 words';
+      document.getElementById('file-indicator').classList.remove('visible');
+      cleanEditedText = '';
+    }
+  </script>
+
+</body>
+</html>
